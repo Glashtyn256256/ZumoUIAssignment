@@ -1,30 +1,41 @@
 #include <Zumo32U4.h>
+#include "TurnSensor.h"
 
 //Serial1 communicates over XBee
 //Serial communicates over USB cable
 
+Zumo32U4Encoders encoders;
 Zumo32U4Motors motors;
 Zumo32U4ButtonA buttonA;
 Zumo32U4LineSensors lineSensors;
 Zumo32U4ProximitySensors proxSensors;
+Zumo32U4LCD lcd;
+Zumo32U4Buzzer buzzer;
+L3G gyro;
 
 #define NUM_SENSORS 5
+#define NUM_ENCODERS 4
 uint16_t lineSensorValues[NUM_SENSORS];
+uint16_t motorEncoderValues[NUM_ENCODERS];
 const uint16_t sensorThreshold = 200;
 #define QTR_THRESHOLD     1000  // microseconds
 
 // These might need to be tuned for different motor types.
-#define REVERSE_SPEED     200  // 0 is stopped, 400 is full speed
-#define TURN_SPEED        200
-#define FORWARD_SPEED     200
-#define REVERSE_DURATION  200  // ms
-#define TURN_DURATION     300  // ms
+#define REVERSE_SPEED     100  // 0 is stopped, 400 is full speed
+#define TURN_SPEED        100
+#define FORWARD_SPEED     100
+#define REVERSE_DURATION  400  // ms
+#define TURN_DURATION     100  // ms
 
 void setup() {
   // put your setup code here, to run once:
   Serial1.begin(9600);
   Serial.begin(9600);
-  lineSensors.initFiveSensors();
+  lineSensors.initThreeSensors();
+  
+  turnSensorSetup();
+  delay(500);
+  turnSensorReset();
 }
 void printReadingsToSerial()
 {
@@ -38,9 +49,9 @@ void printReadingsToSerial()
   );
   Serial.print(buffer);
 }
+
 bool aboveLine(uint8_t sensorIndex)
 {
-
   return lineSensorValues[sensorIndex] > sensorThreshold;
 }
 
@@ -49,53 +60,60 @@ void loop() {
   // put your main code here, to run repeatedly:
 incomingByte = Serial1.read();
 lineSensors.read(lineSensorValues);
-
- if (lineSensorValues[0] < QTR_THRESHOLD)
-  {
-    // If leftmost sensor detects line, reverse and turn to the
-    // right.
-    motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-    delay(REVERSE_DURATION);
-    motors.setSpeeds(TURN_SPEED, -TURN_SPEED);
-    delay(TURN_DURATION);
-    motors.setSpeeds(FORWARD_SPEED, FORWARD_SPEED);
-  }
-  else if (lineSensorValues[NUM_SENSORS - 1] < QTR_THRESHOLD)
-  {
-    // If rightmost sensor detects line, reverse and turn to the
-    // left.
-    motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-    delay(REVERSE_DURATION);
-    motors.setSpeeds(-TURN_SPEED, TURN_SPEED);
-    delay(TURN_DURATION);
-    motors.setSpeeds(FORWARD_SPEED, FORWARD_SPEED);
-  }
-
-printReadingsToSerial();
-
-
-switch(incomingByte){
-  case'w':  motors.setLeftSpeed(100);
-            motors.setRightSpeed(100);
+turnSensorUpdate();
+            int angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
             //delay(2);
+            motors.setSpeeds(FORWARD_SPEED + (angle * 10), FORWARD_SPEED - (angle * 10));
+            
+//reverse back out and then adjust the encoders to match each other, to keep it straight?
+switch(incomingByte)
+{
+  case'w':  
             break;
   
   case 'a': motors.setLeftSpeed(-100);
             motors.setRightSpeed(100);
+            while((int32_t)turnAngle < turnAngle45 * 2)
+            {
+              turnSensorUpdate();
+            }
+            motors.setLeftSpeed(0);
+            motors.setRightSpeed(0);
+            //reset encoders, we only want the encoders for when it's going straight.
+            encoders.getCountsAndResetLeft();
+            encoders.getCountsAndResetRight();
+            turnSensorReset();
             break;
 
 case's':  motors.setLeftSpeed(-100);
             motors.setRightSpeed(-100);
+            turnSensorUpdate();
             //delay(2);
             break;
 
  case 'd': motors.setLeftSpeed(100);
             motors.setRightSpeed(-100);
+           while((int32_t)turnAngle < -turnAngle45 * 2)
+            {
+              turnSensorUpdate();
+            }
+            motors.setLeftSpeed(0);
+            motors.setRightSpeed(0);
+            turnSensorReset();
+            encoders.getCountsAndResetLeft();
+            encoders.getCountsAndResetRight();
             break;
             
   case'e':  motors.setLeftSpeed(0);
             motors.setRightSpeed(0);
+            Serial.print("Stopped");
             break;
   
   }
+  case'z': break;
+  case'x': break;
+
 }
+
+
+  

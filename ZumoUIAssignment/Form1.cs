@@ -20,6 +20,7 @@ namespace ZumoUIAssignment
                 //Change the portname according to your computer
                 port = new SerialPort("COM3", 9600);
                 port.Open();
+                timer1.Enabled = true;
             }
         }
         void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -27,6 +28,7 @@ namespace ZumoUIAssignment
             if (port != null && port.IsOpen)
             {
                 port.Close();
+                timer1.Enabled = false;
             }
         }
 
@@ -53,10 +55,29 @@ namespace ZumoUIAssignment
         {
 
         }
-
+        
         private void button5_Click(object sender, EventArgs e)
         {
             port.Write("e");
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            string incomingText = port.ReadExisting();
+            if (incomingText != "" && incomingText != null)
+            {
+                textData.Text = incomingText;
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            port.Write("z");
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            port.Write("x");
         }
     }
 }
