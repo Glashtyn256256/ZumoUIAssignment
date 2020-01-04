@@ -18,6 +18,8 @@ L3G gyro;
 uint16_t lineSensorValues[NUM_SENSORS];
 uint16_t motorEncoderValues[NUM_ENCODERS];
 const uint16_t sensorThreshold = 200;
+uint8_t leftValue;
+uint8_t rightValue;
 #define QTR_THRESHOLD     1000  // microseconds
 
 // These might need to be tuned for different motor types.
@@ -32,6 +34,7 @@ void setup() {
   Serial1.begin(9600);
   Serial.begin(9600);
   lineSensors.initThreeSensors();
+  proxSensors.initFrontSensor();
   
   turnSensorSetup();
   delay(500);
@@ -109,10 +112,42 @@ case's':  motors.setLeftSpeed(-100);
             Serial.print("Stopped");
             break;
   
-  }
-  case'z': break;
-  case'x': break;
+  
+  case'z':  break;
+  
+ 
 
+  case'x': break;
+  }
+}
+void ScanRoom()
+{
+  bool objectSeen = false;
+  motors.setLeftSpeed(-100);
+  motors.setRightSpeed(100);
+  while((int32_t)turnAngle < turnAngle45 * 2)
+   {
+    if(objectSeen == false)
+    {
+      proxSensors.read();
+      leftValue = proxSensors.countsFrontWithLeftLeds();
+      rightValue = proxSensors.countsFrontWithRightLeds();    
+      objectSeen = leftValue >= sensorThreshold || rightValue >= sensorThreshold;
+    }
+    turnSensorUpdate();
+   }
+   
+    while((int32_t)turnAngle < -turnAngle45 * 6)
+    {
+      if(objectSeen == false)
+      {
+        proxSensors.read();
+        leftValue = proxSensors.countsFrontWithLeftLeds();
+        rightValue = proxSensors.countsFrontWithRightLeds();    
+        objectSeen = leftValue >= sensorThreshold || rightValue >= sensorThreshold;
+      }
+      turnSensorUpdate();
+    }
 }
 
 
