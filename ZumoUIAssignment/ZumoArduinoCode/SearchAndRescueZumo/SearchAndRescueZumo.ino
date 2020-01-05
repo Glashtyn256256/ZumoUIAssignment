@@ -150,5 +150,34 @@ void ScanRoom()
     }
 }
 
+void StraightenZumoUsingEncoders()
+{
+  if(encoders.getCountsLeft() < encoders.getCountsRight())
+  {
+    //May be some speed maths we can do to setleftspeed and add it into while loop
+    //Like how the gryo stays straight
+    motors.setLeftSpeed(5);
+    motors.setRightSpeed(0);
+    while(encoders.getCountsLeft() >= encoders.getCountsRight())
+    {
+      Serial.print(encoders.getCountsLeft());
+      Serial.print(encoders.getCountsRight());
+    } 
+      motors.setLeftSpeed(0);
+  }
+  else
+  {
+    motors.setLeftSpeed(0);
+    motors.setRightSpeed(5);
+    while(encoders.getCountsRight() >= encoders.getCountsLeft())
+    {
+      Serial.print(encoders.getCountsRight());
+      Serial.print(encoders.getCountsLeft());
+    } 
+      motors.setRightSpeed(0);
+  }
+  turnSensorReset();
+}
+
 
   
