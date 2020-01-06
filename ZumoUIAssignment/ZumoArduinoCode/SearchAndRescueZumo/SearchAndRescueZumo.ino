@@ -63,6 +63,20 @@ void loop() {
   // put your main code here, to run repeatedly:
 incomingByte = Serial1.read();
 lineSensors.read(lineSensorValues);
+if (lineSensorValues[0] < QTR_THRESHOLD || lineSensorValues[NUM_SENSORS - 1] < QTR_THRESHOLD)
+{
+  delay(30);
+  if((lineSensorValues[0] < QTR_THRESHOLD && lineSensorValues[2] < QTR_THRESHOLD) || (lineSensorValues[NUM_SENSORS - 1] < QTR_THRESHOLD && lineSensorValues[2] < QTR_THRESHOLD))
+  {
+    motors.setLeftSpeed(0);
+    motors.setRightSpeed(0);
+   }
+   else
+   {
+    motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+    delay(REVERSE_DURATION);
+   }
+}
 turnSensorUpdate();
             int angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
             //delay(2);
