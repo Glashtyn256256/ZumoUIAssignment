@@ -18,7 +18,7 @@ namespace ZumoUIAssignment
             InitializeComponent(); this.FormClosed += new FormClosedEventHandler(Form1_FormClosed); if (port == null)
             {
                 //Change the portname according to your computer
-                port = new SerialPort("COM3", 9600);
+                port = new SerialPort("COM6", 9600);
                 port.Open();
                 timer1.Enabled = true;
             }

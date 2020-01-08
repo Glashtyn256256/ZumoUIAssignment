@@ -93,7 +93,7 @@ void turnSensorSetup()
 }
 void turnSensorReadToSerial()
 {
-  Serial.print((((int32_t)turnAngle >> 16) * 360) >> 16);
+  //Serial.print((((int32_t)turnAngle >> 16) * 360) >> 16);
 }
 // This should be called to set the starting point for measuring
 // a turn.  After calling this, turnAngle will be 0.
