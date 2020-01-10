@@ -21,11 +21,11 @@ const uint16_t sensorThreshold = 200;
 const uint16_t sensorProximityThreshold = 5;
 uint16_t leftValue;
 uint16_t rightValue;
-#define QTR_THRESHOLD     1200  // microseconds
-
+#define QTR_THRESHOLD     500  // microseconds
+#define ENCODER_TURN_LIMIT 658
 // These might need to be tuned for different motor types.
-#define REVERSE_SPEED     100  // 0 is stopped, 400 is full speed
-#define TURN_SPEED        100
+#define REVERSE_SPEED     150  // 0 is stopped, 400 is full speed
+#define TURN_SPEED        150
 #define FORWARD_SPEED     100
 #define REVERSE_DURATION  250  // ms
 #define TURN_DURATION     100  // ms
@@ -41,10 +41,10 @@ void setup() {
 
   lineSensors.initThreeSensors();
   proxSensors.initFrontSensor();
-  buttonA.waitForButton();
-  //turnSensorSetup();
-  //lineSensorCalibrateSetup();
-  Serial.print(readBatteryMillivolts());
+//  buttonA.waitForButton();
+  turnSensorSetup();
+//  lineSensorCalibrateSetup();
+//  Serial1.print(readBatteryMillivolts());
 
 }
 void printReadingsToSerial()
@@ -65,12 +65,61 @@ void printReadingsToSerials()
   sprintf(buffer, "%1d %1d %c\n",
           leftValue, rightValue
          );
-  Serial.print(buffer);
+  Serial1.print(buffer);
 }
 bool aboveLine(uint8_t sensorIndex)
 {
   return lineSensorValues[sensorIndex] > sensorThreshold;
 }
+
+void TurnRightUsingEncoders()
+{
+  MotorSpeedTurnRight();
+
+  int error;
+  int correction;
+  int currentSpeedRight = TURN_SPEED;
+  int currentSpeedLeft = TURN_SPEED;
+
+  int countsLeft = encoders.getCountsAndResetLeft();
+  int countsRight = encoders.getCountsAndResetRight();
+  while ((countsRight < ENCODER_TURN_LIMIT) && (countsLeft < ENCODER_TURN_LIMIT))
+  {
+    countsLeft = encoders.getCountsLeft();
+    countsRight = -encoders.getCountsRight();
+    error = countsRight - STRAIGHTFACTOR * countsLeft;
+    correction = Kp * error;
+    currentSpeedLeft = TURN_SPEED + correction;
+    motors.setLeftSpeed(currentSpeedLeft);
+  }  
+//   if (countsRight < ENCODER_TURN_LIMIT)
+//  {
+//    while ((countsRight < ENCODER_TURN_LIMIT))
+//    {
+//      countsLeft = encoders.getCountsLeft();
+//      countsRight = -encoders.getCountsRight();
+//      motors.setLeftSpeed(-100);
+//
+//    }
+//  }
+//  else if ((countsLeft < ENCODER_TURN_LIMIT))
+//  {
+//    while ((countsLeft < ENCODER_TURN_LIMIT))
+//    {
+//      countsLeft = encoders.getCountsLeft();
+//      countsRight = -encoders.getCountsRight();
+//      motors.setRightSpeed(100);
+//
+//    }
+//  }
+  motors.setLeftSpeed(0);
+  motors.setRightSpeed(0);
+  //reset encoders, we only want the encoders for when it's going straight.
+  Serial1.println(encoders.getCountsAndResetLeft());
+  Serial1.println(encoders.getCountsAndResetRight());
+  turnSensorReset();
+}
+
 
 char incomingByte;
 void loop() {
@@ -83,45 +132,53 @@ void loop() {
       MovementGoingForward();
       break;
 
+    case 'd':
+      TurnRightUsingEncoders();
+      break;
+    case 'x': 
+      turnRight(90);
+      break;
+     case 'z': turnLeft(90); 
+      break;
     case 'a':
       MotorSpeedTurnLeft();
       int error;
       int correction;
-      int currentSpeedLeft = MAIN_SPEED;
-      int currentSpeedRight = MAIN_SPEED;
+      int currentSpeedLeft = TURN_SPEED;
+      int currentSpeedRight = TURN_SPEED;
 
       int countsLeft = encoders.getCountsAndResetLeft();
       int countsRight = encoders.getCountsAndResetRight();
 
-      while ((countsLeft < 648) && (countsRight < 648))
+      while ((countsLeft < ENCODER_TURN_LIMIT) && (countsRight < ENCODER_TURN_LIMIT))
       {
         countsLeft = -encoders.getCountsLeft();
         countsRight = encoders.getCountsRight();
         error = countsLeft - STRAIGHTFACTOR * countsRight;
         correction = Kp * error;
-        currentSpeedRight = MAIN_SPEED + correction;
+        currentSpeedRight = TURN_SPEED + correction;
         motors.setRightSpeed(currentSpeedRight);
       }
-      if ((countsLeft < 648))
-      {
-        while ((countsLeft < 648))
-        {
-          countsLeft = -encoders.getCountsLeft();
-        countsRight = encoders.getCountsRight();
-          motors.setRightSpeed(0);
-
-        }
-      }
-      else if (countsRight < 648)
-      {
-        while ((countsRight < 648))
-        {
-          countsLeft = -encoders.getCountsLeft();
-        countsRight = encoders.getCountsRight();
-          motors.setLeftSpeed(0);
-
-        }
-      }
+//      if ((countsLeft < ENCODER_TURN_LIMIT))
+//      {
+//        while ((countsLeft < ENCODER_TURN_LIMIT))
+//        {
+//          countsLeft = -encoders.getCountsLeft();
+//          countsRight = encoders.getCountsRight();
+//          motors.setRightSpeed(-100);
+//
+//        }
+//      }
+//      else if (countsRight < ENCODER_TURN_LIMIT)
+//      {
+//        while ((countsRight < ENCODER_TURN_LIMIT))
+//        {
+//          countsLeft = -encoders.getCountsLeft();
+//          countsRight = encoders.getCountsRight();
+//          motors.setLeftSpeed(100);
+//
+//        }
+//      }
       motors.setLeftSpeed(0);
       motors.setRightSpeed(0);
       //reset encoders, we only want the encoders for when it's going straight.
@@ -136,18 +193,7 @@ void loop() {
       //delay(2);
       break;
 
-    case 'd': MotorSpeedTurnRight();
-      Serial.print("working");
-      while ((int32_t)turnAngle > -turnAngle45 * 2)
-      {
-        turnSensorUpdate();
-      }
-      motors.setLeftSpeed(0);
-      motors.setRightSpeed(0);
-      turnSensorReset();
-      encoders.getCountsAndResetLeft();
-      encoders.getCountsAndResetRight();
-      break;
+
 
     case'e':  motors.setLeftSpeed(0);
       motors.setRightSpeed(0);
@@ -155,14 +201,47 @@ void loop() {
       break;
 
 
-    case'z':  ScanRoom();
-      break;
+    
 
 
 
-    case'x': break;
+    
   }
 }
+void turnRight(int degrees) {
+  turnSensorReset();
+  motors.setSpeeds(TURN_SPEED, -TURN_SPEED);
+  int angle = 0;
+  do {
+    delay(1);
+    turnSensorUpdate();
+    angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
+    lcd.gotoXY(0, 0);
+    lcd.print(angle);
+    lcd.print(" ");
+  } while (angle > -degrees);
+  Serial1.println(encoders.getCountsAndResetLeft());
+      Serial1.println(encoders.getCountsAndResetRight());
+  motors.setSpeeds(0, 0);
+}
+
+void turnLeft(int degrees) {
+  turnSensorReset();
+  motors.setSpeeds(-TURN_SPEED, TURN_SPEED);
+  int angle = 0;
+  do {
+    delay(1);
+    turnSensorUpdate();
+    angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
+    lcd.gotoXY(0, 0);
+    lcd.print(angle);
+    lcd.print(" ");
+  } while (angle < degrees);
+    Serial1.println(encoders.getCountsAndResetLeft());
+    Serial1.println(encoders.getCountsAndResetRight());
+  motors.setSpeeds(0, 0);
+}
+
 void ScanRoom()
 {
   bool objectSeen = false;
@@ -252,13 +331,13 @@ void StraightenZumoUsingEncoders()
 
 void MotorSpeedTurnLeft()
 {
-  motors.setLeftSpeed(-MAIN_SPEED);
-  motors.setRightSpeed(MAIN_SPEED);
+  motors.setLeftSpeed(-TURN_SPEED);
+  motors.setRightSpeed(TURN_SPEED);
 }
 void MotorSpeedTurnRight()
 {
-  motors.setLeftSpeed(MAIN_SPEED);
-  motors.setRightSpeed(-MAIN_SPEED);
+  motors.setLeftSpeed(TURN_SPEED);
+  motors.setRightSpeed(-TURN_SPEED);
 }
 void MotorSpeedForward()
 {
@@ -340,6 +419,7 @@ void MovementGoingForward()
     motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
     turnSensorUpdate();
     lineSensors.read(lineSensorValues);
+    printReadingsToSerial();
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
       printReadingsToSerial();
@@ -352,7 +432,7 @@ void MovementGoingForward()
               && lineSensorValues[1] > QTR_THRESHOLD))
       {
         motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(200);
+        delay(150);
         motors.setLeftSpeed(0);
         motors.setRightSpeed(0);
         break;
@@ -367,14 +447,14 @@ void MovementGoingForward()
         if (lineSensorValues[2] > QTR_THRESHOLD)
         {
           motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-          delay(50);
+          delay(60);
           motors.setLeftSpeed(0);
           motors.setRightSpeed(0);
         }
         else
         {
           motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-          delay(50);
+          delay(60);
           motors.setLeftSpeed(0);
           motors.setRightSpeed(0);
         }
