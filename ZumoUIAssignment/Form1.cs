@@ -80,5 +80,15 @@ namespace ZumoUIAssignment
         {
             port.Write("x");
         }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            port.Write("b");
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            port.Write("h");
+        }
     }
 }
