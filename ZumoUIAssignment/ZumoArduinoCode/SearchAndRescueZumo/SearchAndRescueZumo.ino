@@ -200,30 +200,36 @@ void loop() {
   {
     case'w':
       MovementGoingForward();
+      //Serial1.clear();
       break;
 
     case 'a':
       TurnLeft(90);
       AddMovementValueIntoArray('d');
+      //Serial1.clear();
       break;
 
     case 'd':
       TurnRight(90);
       AddMovementValueIntoArray('a');
+      //Serial1.clear();
       break;
 
     case 's':
       MotorSpeedBackward();
       turnSensorUpdate();
+      //Serial1.clear();
       //delay(2);
       break;
 
     case 'z':
       TurnLeftUsingEncoders();
+      //Serial1.clear();
       break;
 
     case 'x':
       TurnRightUsingEncoders();
+      //Serial1.clear();
       break;
 
     case 'b':
@@ -246,6 +252,7 @@ void loop() {
       AddMovementValueIntoArray('b');
       MovementForwardUsingDistance();
       MotorSpeedStop();
+      //Serial1.clear();
       break;
     case 'e':
       MotorSpeedStop();
@@ -660,16 +667,19 @@ void SwitchCaseForSearchingRoomInMovement()
     case 'z':
       AddMovementValueIntoArray('x');
       TurnLeftScanRoom();
+      //Serial1.clear();
       break;
 
     case 'x':
       AddMovementValueIntoArray('z');
       TurnRightScanRoom();
+      //Serial1.clear();
       break;
 
     case 'e':
       MotorSpeedStop();
       Serial1.print("Stopped");
+      //Serial1.clear();
       break;
   }
 }
@@ -760,6 +770,8 @@ void MovementForwardUsingDistance()
   int countsLeft =  encoders.getCountsLeft();
   int countsRight = encoders.getCountsRight();
   motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
+  Serial1.println(totalDistanceValueLeftEncoder);
+  Serial1.println(totalDistanceValueRightEncoder);
   while (countsLeft + tempLeft < totalDistanceValueLeftEncoder && countsRight + tempRight < totalDistanceValueRightEncoder)
   {
     delay(2);
@@ -794,8 +806,9 @@ void MovementForwardUsingDistance()
         tempRight += encoders.getCountsAndResetRight();
       }
     }
-    printReadingsToSerial();
   }
+  Serial1.println(countsLeft + tempLeft);
+  Serial1.println(countsRight + tempRight);
 }
 
 
