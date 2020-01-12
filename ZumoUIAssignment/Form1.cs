@@ -66,8 +66,10 @@ namespace ZumoUIAssignment
             string incomingText = port.ReadExisting();
             if (incomingText != "" && incomingText != null)
             {
-                textData.Text += "\n";
-                textData.Text += incomingText + "\n";
+                textData.AppendText(incomingText);
+                textData.AppendText(Environment.NewLine);
+                //textData.Text += "\n";
+                //textData.Text += incomingText + "\n";
             }
         }
 
