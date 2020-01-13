@@ -66,8 +66,16 @@ namespace ZumoUIAssignment
             string incomingText = port.ReadExisting();
             if (incomingText != "" && incomingText != null)
             {
-                textData.AppendText(incomingText);
-                textData.AppendText(Environment.NewLine);
+                if (!incomingText.Contains("#Room"))
+                {
+                    textData.AppendText(incomingText);
+                    textData.AppendText(Environment.NewLine);
+                }
+                else
+                {
+                    textRoom.AppendText(incomingText);
+                    textRoom.AppendText(Environment.NewLine);
+                }
                 //textData.Text += "\n";
                 //textData.Text += incomingText + "\n";
             }

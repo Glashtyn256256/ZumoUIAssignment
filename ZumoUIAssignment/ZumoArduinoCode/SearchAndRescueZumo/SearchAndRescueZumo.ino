@@ -709,6 +709,7 @@ void SwitchCaseForSearchingRoomInMovement()
   switch (incomingByte)
   {
     case 'z':
+      Serial1.print("Automated: Searching Room On The Right");
       AddMovementValueIntoArray('x');
       TurnLeftScanRoom();
       //Serial1.flush();
@@ -716,6 +717,7 @@ void SwitchCaseForSearchingRoomInMovement()
 
     case 'x':
       AddMovementValueIntoArray('z');
+      Serial1.print("Automated: Searching Room On The Left");
       TurnRightScanRoom();
       //Serial1.flush();
       break;

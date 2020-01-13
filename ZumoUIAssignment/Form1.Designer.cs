@@ -35,7 +35,7 @@
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.textData = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.textRoom = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -115,14 +115,14 @@
             this.textData.Size = new System.Drawing.Size(258, 270);
             this.textData.TabIndex = 5;
             // 
-            // textBox2
+            // textRoom
             // 
-            this.textBox2.Location = new System.Drawing.Point(174, 365);
-            this.textBox2.Margin = new System.Windows.Forms.Padding(2);
-            this.textBox2.Multiline = true;
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(258, 72);
-            this.textBox2.TabIndex = 6;
+            this.textRoom.Location = new System.Drawing.Point(174, 365);
+            this.textRoom.Margin = new System.Windows.Forms.Padding(2);
+            this.textRoom.Multiline = true;
+            this.textRoom.Name = "textRoom";
+            this.textRoom.Size = new System.Drawing.Size(258, 72);
+            this.textRoom.TabIndex = 6;
             // 
             // label1
             // 
@@ -275,7 +275,7 @@
             this.Controls.Add(this.button6);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.textRoom);
             this.Controls.Add(this.textData);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
@@ -299,7 +299,7 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.TextBox textData;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox textRoom;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Timer timer1;
