@@ -47,7 +47,9 @@ int indexPositionDistance;
 int indexPositionMovement;
 int indexPositionCorridorRooms;
 
+int AmountOfRooms = 1;
 bool AutomationIsTrue = false;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -199,40 +201,79 @@ void loop() {
   switch (incomingByte)
   {
     case'w':
-      MovementGoingForward();
-      //Serial1.clear();
+      Serial1.print("Manual: Moving Forward");
+      MotorSpeedForward();
+      // Serial1.flush();
       break;
 
     case 'a':
-      TurnLeft(90);
-      AddMovementValueIntoArray('d');
-      //Serial1.clear();
+      Serial1.print("Manual: Turning left");
+      MotorSpeedTurnLeft();
+      //Serial1.flush();
       break;
 
     case 'd':
-      TurnRight(90);
-      AddMovementValueIntoArray('a');
-      //Serial1.clear();
+      Serial1.print("Manual: Turning right");
+      MotorSpeedTurnRight();
+      //Serial1.flush();
       break;
 
     case 's':
+      Serial1.print("Manual: Moving Backwards");
       MotorSpeedBackward();
-      turnSensorUpdate();
-      //Serial1.clear();
-      //delay(2);
+      //Serial1.flush();
       break;
 
-    case 'z':
-      TurnLeftUsingEncoders();
-      //Serial1.clear();
+    case 'e':
+      MotorSpeedStop();
+      Serial1.print("Movement Stopped");
+      // Serial1.flush();
       break;
 
-    case 'x':
-      TurnRightUsingEncoders();
-      //Serial1.clear();
+    case 'q':
+      Serial1.print("Manual: Turning Left 90 Degrees");
+      TurnLeft(90);
+      Serial1.print("Manual: Turning Left Completed, Press C To Move Foward");
+     //  Serial1.flush();
+      break;
+
+    case 'r':
+      Serial1.print("Manual: Turning Right 90 Degrees");
+      TurnRight(90);
+      Serial1.print("Manual: Turning Right Completed, Press C To Move Foward");
+     //  Serial1.flush();
+      break;
+
+    case'i': case'c':
+      Serial1.print("Automated: Moving Forward");
+      MovementGoingForward();
+     //  Serial1.flush();
+      break;
+
+    case 'j':
+      Serial1.print("Automated: Turning Left 90 Degrees");
+      TurnLeft(90);
+      Serial1.print("Automated: Turning Left Completed");
+      AddMovementValueIntoArray('d');
+      delay(100);
+      Serial1.print("Automated: Moving Forward");
+      MovementGoingForward();
+    //   Serial1.flush();
+      break;
+
+    case 'k':
+      Serial1.print("Automated: Turning Right 90 Degrees");
+      TurnRight(90);
+      Serial1.print("Automated: Turning Right Completed");
+      AddMovementValueIntoArray('a');
+      delay(100);
+      Serial1.print("Automated: Moving Forward");
+      MovementGoingForward();
+      //Serial1.flush();
       break;
 
     case 'b':
+      Serial1.print("Automated: Turning Right 180 Degrees");
       TurnLeft(90);
       TurnLeft(90);
       ResetEncoderTotalValues();
@@ -250,23 +291,24 @@ void loop() {
       }
       AddEncoderValuesIntoArray();
       AddMovementValueIntoArray('b');
+      Serial1.print("Automated: Moving To Destination");
       MovementForwardUsingDistance();
+      Serial1.print("Automated: Destination Reached");
       MotorSpeedStop();
-      //Serial1.clear();
-      break;
-    case 'e':
-      MotorSpeedStop();
-      Serial1.print("Stopped");
+      Serial1.print("Automated: Moving Forward");
+      MovementGoingForward();
+      //Serial1.flush();
       break;
 
-      case 'h':
-         AutomationIsTrue = true;
-         //We decrement here to get the last position in array with our values. 
-         indexPositionMovement--;
-         indexPositionDistance--;
-         TurnLeft(90);
-         TurnLeft(90);
-         SwitchCaseForAutomaticBaseReturn();
+
+    case 'h':
+      AutomationIsTrue = true;
+      //We decrement here to get the last position in array with our values.
+      indexPositionMovement--;
+      indexPositionDistance--;
+      TurnLeft(90);
+      TurnLeft(90);
+      SwitchCaseForAutomaticBaseReturn();
       break;
   }
 }
@@ -313,14 +355,15 @@ void ScanRoom()
   objectSeen = ScanRoomProximityTurnRightGyro(objectSeen, DEGREES);
   if (!AutomationIsTrue) {
     if (objectSeen) {
-      //Serial1.print("TRUE");
+      Serial1.print('#Room ' + AmountOfRooms + ' Searched: Survivor Inside');
+      AmountOfRooms++;
       AddBoolValueToArray(true, true);
 
     } else {
       //Change it to n which stands for nothing, means we can skip searching a room in the automation
       //- 1 since when it was added position would have been incremented.
       movementArray[indexPositionMovement - 1] = 'n';
-     // Serial1.print("FALSE");
+      Serial1.print('#Room ' + AmountOfRooms + ' Searched: Room Empty');
     }
   }
 }
@@ -563,8 +606,8 @@ void MovementGoingForward()
         MotorSpeedStop();
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
-        Serial1.println(leftDistanceEncoderArray[indexPositionDistance-1]);
-        Serial1.println(rightDistanceEncoderArray[indexPositionDistance-1]);
+        Serial1.println(leftDistanceEncoderArray[indexPositionDistance - 1]);
+        Serial1.println(rightDistanceEncoderArray[indexPositionDistance - 1]);
         indexPositionCorridorRooms++;
         break;
       }
@@ -615,7 +658,7 @@ void SwitchCaseForAutomaticBaseReturn()
         break;
 
       case 'd':
-       Serial1.println("turn right");
+        Serial1.println("turn right");
         TurnRight(90);
         indexPositionMovement--;
         indexPositionDistance--;
@@ -623,7 +666,7 @@ void SwitchCaseForAutomaticBaseReturn()
         break;
 
       case 'z':
-      // Serial1.println("turn left scan");
+        // Serial1.println("turn left scan");
         TurnLeftScanRoom();
         indexPositionMovement--;
         indexPositionDistance--;
@@ -631,18 +674,19 @@ void SwitchCaseForAutomaticBaseReturn()
         break;
 
       case 'x':
-     //  Serial1.println("turn right scan");
+        //  Serial1.println("turn right scan");
         TurnRightScanRoom();
         indexPositionMovement--;
         indexPositionDistance--;
         MovementForwardUsingDistanceAutomated();
         break;
+
       case 'b':
-      // Serial1.println("revers b");
+        // Serial1.println("revers b");
         indexPositionDistance--;
         MovementForwardUsingDistanceAutomated();
         indexPositionMovement--;
-        indexPositionDistance--;   
+        indexPositionDistance--;
         TurnRight(90);
         TurnRight(90);
         MovementForwardUsingDistanceAutomated();
@@ -652,7 +696,7 @@ void SwitchCaseForAutomaticBaseReturn()
         indexPositionMovement--;
         indexPositionDistance--;
         MovementForwardUsingDistanceAutomated();
-        
+
     }
 
   }
@@ -667,19 +711,19 @@ void SwitchCaseForSearchingRoomInMovement()
     case 'z':
       AddMovementValueIntoArray('x');
       TurnLeftScanRoom();
-      //Serial1.clear();
+      //Serial1.flush();
       break;
 
     case 'x':
       AddMovementValueIntoArray('z');
       TurnRightScanRoom();
-      //Serial1.clear();
+      //Serial1.flush();
       break;
 
     case 'e':
       MotorSpeedStop();
       Serial1.print("Stopped");
-      //Serial1.clear();
+      //Serial1.flush();
       break;
   }
 }
@@ -695,7 +739,7 @@ void TurnLeftScanRoom()
   delay(100);
   TurnLeft(90);
   delay(100);
-  //MovementGoingForward();
+  MovementGoingForward();
 }
 void TurnRightScanRoom()
 {
@@ -709,7 +753,7 @@ void TurnRightScanRoom()
   delay(100);
   TurnRight(90);
   delay(100);
-  //MovementGoingForward();
+  MovementGoingForward();
 }
 void AddEncoderValues( int leftencodervalue, int rightencodervalue)
 {
@@ -836,26 +880,26 @@ void MovementForwardUsingDistance(int distance)
     motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
     //lineSensors.read(lineSensorValues);
     //printReadingsToSerial();
-//    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-//    {
-//      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-//      delay(REVERSE_DURATION);
-//      MotorSpeedStop();
-//
-//      if (lineSensorValues[2] > QTR_THRESHOLD)
-//      {
-//        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-//        delay(TURN_DURATION);
-//        MotorSpeedStop();
-//      }
-//      else
-//      {
-//        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-//        delay(TURN_DURATION);
-//        MotorSpeedStop();
-//      }
-//    }
-//    printReadingsToSerial();
+    //    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
+    //    {
+    //      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+    //      delay(REVERSE_DURATION);
+    //      MotorSpeedStop();
+    //
+    //      if (lineSensorValues[2] > QTR_THRESHOLD)
+    //      {
+    //        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
+    //        delay(TURN_DURATION);
+    //        MotorSpeedStop();
+    //      }
+    //      else
+    //      {
+    //        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
+    //        delay(TURN_DURATION);
+    //        MotorSpeedStop();
+    //      }
+    //    }
+    //    printReadingsToSerial();
   }
 }
 
@@ -888,33 +932,33 @@ void MovementForwardUsingDistanceAutomated()
     currentSpeedRight = MAIN_SPEED + correction;
     motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
     //Serial1.println(countsLeft + tempLeft);
-  //Serial1.println(countsRight + tempRight);
-//    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-//    {
-//      printReadingsToSerial();
-//      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-//      delay(REVERSE_DURATION);
-//      MotorSpeedStop();
+    //Serial1.println(countsRight + tempRight);
+    //    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
+    //    {
+    //      printReadingsToSerial();
+    //      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+    //      delay(REVERSE_DURATION);
+    //      MotorSpeedStop();
 
-//      if (lineSensorValues[2] > QTR_THRESHOLD)
-//      {
-//        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-//        delay(TURN_DURATION);
-//        MotorSpeedStop();
-//        tempLeft += encoders.getCountsAndResetLeft();
-//        tempRight += encoders.getCountsAndResetRight();
-//      }
-//      else
-//      {
-//        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-//        delay(TURN_DURATION);
-//        MotorSpeedStop();
-//        tempLeft += encoders.getCountsAndResetLeft();
-//        tempRight += encoders.getCountsAndResetRight();
-//      }
-//    }
-//    printReadingsToSerial();
-//  }
+    //      if (lineSensorValues[2] > QTR_THRESHOLD)
+    //      {
+    //        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
+    //        delay(TURN_DURATION);
+    //        MotorSpeedStop();
+    //        tempLeft += encoders.getCountsAndResetLeft();
+    //        tempRight += encoders.getCountsAndResetRight();
+    //      }
+    //      else
+    //      {
+    //        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
+    //        delay(TURN_DURATION);
+    //        MotorSpeedStop();
+    //        tempLeft += encoders.getCountsAndResetLeft();
+    //        tempRight += encoders.getCountsAndResetRight();
+    //      }
+    //    }
+    //    printReadingsToSerial();
+    //  }
   }
   MotorSpeedStop();
 }

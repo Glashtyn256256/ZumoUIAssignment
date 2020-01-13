@@ -32,21 +32,21 @@ namespace ZumoUIAssignment
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void ManualMovementForward(object sender, EventArgs e)
         {
             port.Write("w");
         }
-        private void button2_Click(object sender, EventArgs e)
+        private void ManualTurnRight(object sender, EventArgs e)
         {
             port.Write("d");
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void ManualTurnLeft(object sender, EventArgs e)
         {
             port.Write("a");
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void ManualMovementBackwards(object sender, EventArgs e)
         {
             port.Write("s");
         }
@@ -56,12 +56,12 @@ namespace ZumoUIAssignment
 
         }
         
-        private void button5_Click(object sender, EventArgs e)
+        private void MovementStopped(object sender, EventArgs e)
         {
             port.Write("e");
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
+        private void TextTimer(object sender, EventArgs e)
         {
             string incomingText = port.ReadExisting();
             if (incomingText != "" && incomingText != null)
@@ -73,26 +73,52 @@ namespace ZumoUIAssignment
             }
         }
 
-        private void button6_Click(object sender, EventArgs e)
+        private void AutoSearchRoomLeft(object sender, EventArgs e)
         {
             port.Write("z");
         }
 
-        private void button7_Click(object sender, EventArgs e)
+        private void AutoSearchRoomRight(object sender, EventArgs e)
         {
             port.Write("x");
         }
 
-        private void button8_Click(object sender, EventArgs e)
+        private void AutoTurnAroundTJunction(object sender, EventArgs e)
         {
             port.Write("b");
         }
 
-        private void button9_Click(object sender, EventArgs e)
+        private void ReturnHome(object sender, EventArgs e)
         {
             port.Write("h");
         }
+        private void ManualRotateRight(object sender, EventArgs e)
+        {
+            port.Write("r");
+        }
+        private void ManualRotatelLeft(object sender, EventArgs e)
+        {
+            port.Write("q");
+        }
 
-      
+        private void ManualAutoMoveForward(object sender, EventArgs e)
+        {
+            port.Write("c");
+        }
+
+        private void AutomatedMovementForward(object sender, EventArgs e)
+        {
+            port.Write("i");
+        }
+
+        private void AutomatedRotateRight(object sender, EventArgs e)
+        {
+            port.Write("j");
+        }
+
+        private void AutomatedRotateLeft(object sender, EventArgs e)
+        {
+            port.Write("l");
+        }
     }
 }
