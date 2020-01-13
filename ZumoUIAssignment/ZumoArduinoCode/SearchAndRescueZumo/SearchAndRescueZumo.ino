@@ -701,7 +701,7 @@ void MovementGoingForward()
               && lineSensorValues[1] > QTR_THRESHOLD))
       {
         motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(150);
+        delay(200);
         MotorSpeedStop();
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
