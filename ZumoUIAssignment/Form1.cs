@@ -118,5 +118,30 @@ namespace ZumoUIAssignment
         {
             port.Write("l");
         }
+
+        private void AdjustForward(object sender, EventArgs e)
+        {
+            port.Write("t");
+        }
+
+        private void AdjustLeft(object sender, EventArgs e)
+        {
+            port.Write("f");
+        }
+
+        private void AdjustBackwards(object sender, EventArgs e)
+        {
+            port.Write("g");
+        }
+
+        private void AdjustRight(object sender, EventArgs e)
+        {
+            port.Write("y");
+        }
+
+        private void AutoStopButton(object sender, EventArgs e)
+        {
+            port.Write("e");
+        }
     }
 }
