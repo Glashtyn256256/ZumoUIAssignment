@@ -49,7 +49,6 @@ int indexPositionCorridorRooms;
 
 int AmountOfRooms;
 bool ReturnHomeIsTrue;
-bool SurvivorFollowing;
 
 
 void setup() {
@@ -68,10 +67,7 @@ void setup() {
 
 void PlayBuzzer()
 {
-  if (SurvivorFollowing)
-  {
     buzzer.play("!L16 V8 cdefgab>cbagfedc");
-  }
 }
 
 void TurnOffLED()
@@ -846,51 +842,58 @@ void SwitchCaseForAutomaticBaseReturn()
     switch (nextMovement)
     {
       case 'a':
-        Serial1.println("turn left");
+        Serial1.println("Returning Home: Turning Left");
         TurnLeft(90);
         indexPositionMovement--;
         indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'd':
-        Serial1.println("turn right");
+        Serial1.println("Returning Home: Turning Right");
         TurnRight(90);
         indexPositionMovement--;
         indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'z':
-        // Serial1.println("turn left scan");
+        Serial1.println("Returning Home: Searching Left Room For Survivor");
         TurnLeftScanRoom();
         indexPositionMovement--;
         indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'x':
-        //  Serial1.println("turn right scan");
+         Serial1.println("Returning Home: Searching Right Room For Survivor");
         TurnRightScanRoom();
         indexPositionMovement--;
         indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'b':
-        // Serial1.println("revers b");
+        Serial1.println("Returning Home: Moving Forward");
         indexPositionDistance--;
         MovementForwardUsingDistanceAutomated();
         indexPositionMovement--;
         indexPositionDistance--;
+        Serial1.println("Returning Home: Turning 180");
         TurnRight(90);
         TurnRight(90);
+        Serial1.println("Returning Home: Moving Forward");
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'n':
         indexPositionMovement--;
         indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
         MovementForwardUsingDistanceAutomated();
 
     }
@@ -898,7 +901,7 @@ void SwitchCaseForAutomaticBaseReturn()
     if (indexPositionDistance == 0)
     {
       TurnOffLED();
-      Serial1.println("Zumo Has Returned To Home Base");
+      Serial1.println("Returning Home: Zumo Has Returned To Home Base");
       InitArrays();
       break;
     }
@@ -1048,8 +1051,7 @@ void SearchRoomMessagesBeforeReturningHome(bool objectseen)
 void SearchRoomMeessagesReturningHome(bool objectseen)
 {
   if (objectseen) {
-    Serial1.println(" Searched: Survivor Inside Sending Signal! ");
-    SurvivorFollowing = true;
+    Serial1.println("Searched: Survivor Inside Sending Signal! ");
     PlayBuzzer();
     FlashLED();
   } else {
@@ -1097,7 +1099,7 @@ void InitArrays()
   indexPositionCorridorRooms = 0;
   AmountOfRooms = 1;
   ReturnHomeIsTrue = false;
-  SurvivorFollowing = false;
+  
   for (int i = 0; i < 20; i++)
   {
     RoomHasCivilian[i] = false;
