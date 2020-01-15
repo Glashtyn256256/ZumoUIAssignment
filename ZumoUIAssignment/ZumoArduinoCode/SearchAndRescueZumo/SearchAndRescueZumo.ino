@@ -38,14 +38,16 @@ int rightDistanceEncoderArray[20];
 int leftDistanceEncoderArray[20];
 int totalDistanceValueRightEncoder;
 int totalDistanceValueLeftEncoder;
+int indexPositionDistance;
 
-bool RoomHasCivilian[20];
-bool CorridorHasRoom[20];
+//bool RoomHasCivilian[20];
+//bool CorridorHasRoom[20];
+int indexPositionCorridorRooms;
 
 char movementArray[20];
-int indexPositionDistance;
+
 int indexPositionMovement;
-int indexPositionCorridorRooms;
+
 
 int AmountOfRooms;
 bool ReturnHomeIsTrue;
@@ -67,7 +69,7 @@ void setup() {
 
 void PlayBuzzer()
 {
-    buzzer.play("!L16 V8 cdefgab>cbagfedc");
+  buzzer.play("!L16 V8 cdefgab>cbagfedc");
 }
 
 void TurnOffLED()
@@ -95,131 +97,12 @@ void FlashLED()
   delay(100);
   TurnOnLED();
 }
-void printReadingsToSerial()
-{
-  char buffer[80];
-  sprintf(buffer, "%4d %4d %4d %c\n",
-          lineSensorValues[0],
-          lineSensorValues[1],
-          lineSensorValues[2]
-         );
-  Serial.print(buffer);
-}
 
-void printReadingsToSerials()
-{
-  char buffer[80];
-  sprintf(buffer, "%1d %1d %c\n",
-          leftValue, rightValue
-         );
-  Serial1.print(buffer);
-}
+
 
 bool aboveLine(uint8_t sensorIndex)
 {
   return lineSensorValues[sensorIndex] > sensorThreshold;
-}
-
-void TurnRightUsingEncoders()
-{
-  MotorSpeedTurnRight();
-  int error;
-  int correction;
-  int currentSpeedLeft = TURN_SPEED;
-  int currentSpeedRight = TURN_SPEED;
-
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-  while ((countsRight < ENCODER_TURN_LIMIT) && (countsLeft < ENCODER_TURN_LIMIT))
-  {
-    countsLeft = encoders.getCountsLeft();
-    countsRight = -encoders.getCountsRight();
-    error = countsRight - STRAIGHTFACTOR * countsLeft;
-    correction = Kp * error;
-    currentSpeedLeft = TURN_SPEED + correction;
-    motors.setLeftSpeed(currentSpeedLeft);
-  }
-  //   if (countsRight < ENCODER_TURN_LIMIT)
-  //  {
-  //    while ((countsRight < ENCODER_TURN_LIMIT))
-  //    {
-  //      countsLeft = encoders.getCountsLeft();
-  //      countsRight = -encoders.getCountsRight();
-  //      motors.setLeftSpeed(-100);
-  //
-  //    }
-  //  }
-  //  else if ((countsLeft < ENCODER_TURN_LIMIT))
-  //  {
-  //    while ((countsLeft < ENCODER_TURN_LIMIT))
-  //    {
-  //      countsLeft = encoders.getCountsLeft();
-  //      countsRight = -encoders.getCountsRight();
-  //      motors.setRightSpeed(100);
-  //
-  //    }
-  //  }
-  motors.setLeftSpeed(0);
-  motors.setRightSpeed(0);
-  //reset encoders, we only want the encoders for when it's going straight.
-  //Serial1.println(encoders.getCountsAndResetLeft());
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  //Serial1.println(encoders.getCountsAndResetRight());
-  turnSensorReset();
-}
-
-void TurnLeftUsingEncoders()
-{
-  MotorSpeedTurnLeft();
-  int error;
-  int correction;
-  int currentSpeedLeft = TURN_SPEED;
-  int currentSpeedRight = TURN_SPEED;
-
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-
-  while ((countsLeft < ENCODER_TURN_LIMIT) && (countsRight < ENCODER_TURN_LIMIT))
-  {
-
-    countsLeft = -encoders.getCountsLeft();
-    countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
-    correction = Kp * error;
-    currentSpeedRight = TURN_SPEED + correction;
-    motors.setRightSpeed(currentSpeedRight);
-  }
-  //      if ((countsLeft < ENCODER_TURN_LIMIT))
-  //      {
-  //        while ((countsLeft < ENCODER_TURN_LIMIT))
-  //        {
-  //          countsLeft = -encoders.getCountsLeft();
-  //          countsRight = encoders.getCountsRight();
-  //          motors.setRightSpeed(-100);
-  //
-  //        }
-  //      }
-  //      else if (countsRight < ENCODER_TURN_LIMIT)
-  //      {
-  //        while ((countsRight < ENCODER_TURN_LIMIT))
-  //        {
-  //          countsLeft = -encoders.getCountsLeft();
-  //          countsRight = encoders.getCountsRight();
-  //          motors.setLeftSpeed(100);
-  //
-  //        }
-  //      }
-  motors.setLeftSpeed(0);
-  motors.setRightSpeed(0);
-  //reset encoders, we only want the encoders for when it's going straight.
-  Serial1.println(encoders.getCountsAndResetLeft());
-  Serial1.println(encoders.getCountsAndResetRight());
-  turnSensorReset();
 }
 
 char incomingByte;
@@ -350,7 +233,9 @@ void loop() {
       delay(200);
       ResetEncoderTotalValues();
 
-      if (CorridorHasRoom[indexPositionCorridorRooms - 2])
+      if (movementArray[indexPositionMovement - 2] == 'x' ||
+          movementArray[indexPositionMovement - 2] == 'z' ||
+          movementArray[indexPositionMovement - 2] == 'n')
       {
         totalDistanceValueRightEncoder += rightDistanceEncoderArray[indexPositionDistance - 1];
         totalDistanceValueRightEncoder += rightDistanceEncoderArray[indexPositionDistance - 2];
@@ -374,14 +259,11 @@ void loop() {
       MotorSpeedStop();
       //Here we will check if(position is equal to x or z, if it isn't then have another if.
       // saying if position is equal to n then delete size 5, if it isn't then delete two. means it's not got a room.
-      Serial1.println("about to hit if");
-      Serial1.println(movementArray[indexPositionMovement - 2]);
+      
       if (!(movementArray[indexPositionMovement - 2] == 'z' || movementArray[indexPositionMovement - 2] == 'x'))
       {
-        Serial1.println("entered");
         if (movementArray[indexPositionMovement - 2] == 'n')
         {
-          Serial1.println("hit room with corridor");
           if (movementArray[indexPositionMovement - 3] == 'a')
           {
             movementArray[indexPositionMovement - 3] = 'd';
@@ -395,7 +277,6 @@ void loop() {
         }
         else
         {
-          Serial1.println("is hit no room corridor");
           if (movementArray[indexPositionMovement - 2] == 'a')
           {
             movementArray[indexPositionMovement - 2] = 'd';
@@ -432,6 +313,164 @@ void loop() {
       break;
   }
 }
+
+void SwitchCaseForSearchingRoomInMovement()
+{
+  bool turnOffLoop = false;
+  do {
+    incomingByte = Serial1.read();
+
+    switch (incomingByte)
+    {
+      case't':
+        Serial1.println("Manual: Moving Forward");
+        MotorSpeedForward();
+        delay(10);
+        MotorSpeedStop();
+        Serial1.flush();
+        break;
+
+      case 'f':
+        Serial1.println("Adjust: Turning Left");
+        MotorSpeedTurnLeft();
+        delay(10);
+        MotorSpeedStop();
+        turnSensorReset();
+        Serial1.flush();
+        break;
+
+      case 'y':
+        Serial1.println("Adjust: Turning Right");
+        MotorSpeedTurnRight();
+        delay(10);
+        MotorSpeedStop();
+        turnSensorReset();
+        Serial1.flush();
+        break;
+
+      case 'g':
+        Serial1.println("Adjust: Moving Backwards");
+        MotorSpeedBackward();
+        delay(10);
+        MotorSpeedStop();
+        Serial1.flush();
+        break;
+
+      case 'i':
+        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
+        Serial1.println("Automated: Moving Forward");
+        MovementGoingForward();
+        Serial1.flush();
+        turnOffLoop = true;
+        break;
+
+      case 'z':
+        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
+        AddEncoderValuesIntoArray();
+        Serial1.println("Automated: Searching Room On The Left");
+        AddMovementValueIntoArray('x');
+        TurnLeftScanRoom();
+        turnOffLoop = true;
+        Serial1.flush();
+        break;
+
+      case 'x':
+        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
+        AddEncoderValuesIntoArray();
+        Serial1.println("Automated: Searching Room On The Right");
+        AddMovementValueIntoArray('z');
+        TurnRightScanRoom();
+        turnOffLoop = true;
+        Serial1.flush();
+        break;
+
+      case 'e':
+        MotorSpeedStop();
+        Serial1.println("Stopped");
+        Serial1.flush();
+        break;
+    }
+  } while (turnOffLoop != true);
+}
+
+
+void SwitchCaseForAutomaticBaseReturn()
+{
+  //Do the first movement, no need to put in w command.
+  MovementForwardUsingDistanceAutomated();
+  while (true)
+  {
+    char nextMovement = movementArray[indexPositionMovement];
+    switch (nextMovement)
+    {
+      case 'a':
+        Serial1.println("Returning Home: Turning Left");
+        TurnLeft(90);
+        indexPositionMovement--;
+        indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
+        MovementForwardUsingDistanceAutomated();
+        break;
+
+      case 'd':
+        Serial1.println("Returning Home: Turning Right");
+        TurnRight(90);
+        indexPositionMovement--;
+        indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
+        MovementForwardUsingDistanceAutomated();
+        break;
+
+      case 'z':
+        Serial1.println("Returning Home: Searching Left Room For Survivor");
+        TurnLeftScanRoom();
+        indexPositionMovement--;
+        indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
+        MovementForwardUsingDistanceAutomated();
+        break;
+
+      case 'x':
+        Serial1.println("Returning Home: Searching Right Room For Survivor");
+        TurnRightScanRoom();
+        indexPositionMovement--;
+        indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
+        MovementForwardUsingDistanceAutomated();
+        break;
+
+      case 'b':
+        Serial1.println("Returning Home: Moving Forward");
+        indexPositionDistance--;
+        MovementForwardUsingDistanceAutomated();
+        indexPositionMovement--;
+        indexPositionDistance--;
+        Serial1.println("Returning Home: Turning 180");
+        TurnRight(90);
+        TurnRight(90);
+        Serial1.println("Returning Home: Moving Forward");
+        MovementForwardUsingDistanceAutomated();
+        break;
+
+      case 'n':
+        indexPositionMovement--;
+        indexPositionDistance--;
+        Serial1.println("Returning Home: Moving Forward");
+        MovementForwardUsingDistanceAutomated();
+
+    }
+
+    if (indexPositionDistance == 0)
+    {
+      TurnOffLED();
+      Serial1.println("Returning Home: Zumo Has Returned To Home Base");
+      InitArrays();
+      break;
+    }
+  }
+}
+
+
 void TurnRight(int degrees) {
   turnSensorReset();
   int error;
@@ -518,7 +557,6 @@ bool ScanRoomProximityTurnLeftGyro(bool objectseen, int degrees)
       proxSensors.read();
       leftValue = proxSensors.countsFrontWithLeftLeds();
       rightValue = proxSensors.countsFrontWithRightLeds();
-      // printReadingsToSerials();
       objectseen = leftValue >= sensorProximityThreshold || rightValue >= sensorProximityThreshold;
     }
     turnSensorUpdate();
@@ -554,7 +592,6 @@ bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
       proxSensors.read();
       leftValue = proxSensors.countsFrontWithLeftLeds();
       rightValue = proxSensors.countsFrontWithRightLeds();
-      // printReadingsToSerials();
       objectseen = leftValue >= sensorProximityThreshold || rightValue >= sensorProximityThreshold;
     }
     turnSensorUpdate();
@@ -563,6 +600,588 @@ bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
   turnSensorReset();
   return objectseen;
 }
+
+void MotorSpeedTurnLeft()
+{
+  motors.setLeftSpeed(-TURN_SPEED);
+  motors.setRightSpeed(TURN_SPEED);
+}
+void MotorSpeedTurnRight()
+{
+  motors.setLeftSpeed(TURN_SPEED);
+  motors.setRightSpeed(-TURN_SPEED);
+}
+void MotorSpeedForward()
+{
+  motors.setLeftSpeed(MAIN_SPEED);
+  motors.setRightSpeed(MAIN_SPEED);
+}
+void MotorSpeedBackward()
+{
+  motors.setLeftSpeed(-MAIN_SPEED);
+  motors.setRightSpeed(-MAIN_SPEED);
+}
+void MotorSpeedStop()
+{
+  motors.setLeftSpeed(0);
+  motors.setRightSpeed(0);
+}
+
+static void lineSensorCalibrateSetup()
+{
+  lcd.clear();
+
+  // Delay so the robot does not move while the user is still
+  // touching the button.
+  delay(1000);
+
+  // We use the gyro to turn so that we don't turn more than
+  // necessary, and so that if there are issues with the gyro
+  // then you will know before actually starting the robot.
+
+  turnSensorReset();
+
+  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+  
+  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+
+  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+
+  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+  
+  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+  turnSensorReset();
+  MotorSpeedStop();
+}
+
+void MovementGoingForward()
+{
+  turnSensorReset();
+  int error;
+  int correction;
+  int currentSpeedLeft = MAIN_SPEED;
+  int currentSpeedRight = MAIN_SPEED;
+  int countsLeft = encoders.getCountsAndResetLeft();
+  int countsRight = encoders.getCountsAndResetRight();
+  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
+  while (true)
+  {
+    delay(2);
+    incomingByte = Serial1.read();
+    if (incomingByte == 'e')
+    {
+      MotorSpeedStop();
+      SwitchCaseForSearchingRoomInMovement();
+      break;
+    }
+    delay(2);
+    countsLeft = encoders.getCountsLeft();
+    countsRight = encoders.getCountsRight();
+    error = countsLeft - STRAIGHTFACTOR * countsRight;
+    correction = Kp * error;
+    currentSpeedRight = MAIN_SPEED + correction;
+    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
+    lineSensors.read(lineSensorValues);
+    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
+    {
+      delay(50);
+      lineSensors.read(lineSensorValues);
+     
+      if ((lineSensorValues[0] > QTR_THRESHOLD
+           && lineSensorValues[1] > QTR_THRESHOLD)
+          || (lineSensorValues[2] > QTR_THRESHOLD
+              && lineSensorValues[1] > QTR_THRESHOLD))
+      {
+        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+        delay(200);
+        MotorSpeedStop();
+        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
+        AddEncoderValuesIntoArray();
+        indexPositionCorridorRooms++;
+        break;
+      }
+      else
+      {
+        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+        delay(REVERSE_DURATION);
+        MotorSpeedStop();
+        if (lineSensorValues[2] > QTR_THRESHOLD)
+        {
+          motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
+          delay(TURN_DURATION);
+          MotorSpeedStop();
+          AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
+          delay(100);
+        }
+        else
+        {
+          motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
+          delay(TURN_DURATION);
+          MotorSpeedStop();
+          AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
+          delay(100);
+        }
+      }
+    }
+  }
+}
+
+void TurnLeftScanRoom()
+{
+  MotorSpeedStop();
+  delay(100);
+  TurnLeft(90);
+  ScanRoom();
+  delay(400);
+  TurnRight(90);
+  //MovementGoingForward();
+}
+void TurnRightScanRoom()
+{
+  MotorSpeedStop();
+  delay(100);
+  TurnRight(90);
+  ScanRoom();
+  delay(400);
+  TurnLeft(90);
+  // MovementGoingForward();
+}
+void ScanRoom()
+{
+  bool objectSeen = false;
+  delay(200);
+  objectSeen = ScanRoomProximityTurnLeftGyro(objectSeen, 45);
+  delay(200);
+  objectSeen = ScanRoomProximityTurnRightGyro(objectSeen, 45);
+  delay(200);
+  objectSeen = ScanRoomProximityTurnRightGyro(objectSeen, 45);
+  delay(200);
+  objectSeen = ScanRoomProximityTurnLeftGyro(objectSeen, 45);
+  if (!ReturnHomeIsTrue)
+  {
+    SearchRoomMessagesBeforeReturningHome(objectSeen);
+  }
+  else
+  {
+    SearchRoomMeessagesReturningHome(objectSeen);
+  }
+}
+
+void SearchRoomMessagesBeforeReturningHome(bool objectseen)
+{
+  if (objectseen) {
+    Serial1.print("#Room ");
+    Serial1.print(AmountOfRooms);
+    Serial1.println(" Searched: Survivor Inside !");
+    AmountOfRooms++;
+    //AddBoolValueToArray(true, true);
+
+  } else {
+    //Change it to n which stands for nothing, means we can skip searching a room in the automation
+    //- 1 since when it was added position would have been incremented.
+    movementArray[indexPositionMovement - 1] = 'n';
+    Serial1.print("#Room ");
+    Serial1.print(AmountOfRooms);
+    Serial1.println("Searched: Room Empty !");
+   // AddBoolValueToArray(true, false);
+  }
+}
+
+void SearchRoomMeessagesReturningHome(bool objectseen)
+{
+  if (objectseen) {
+    Serial1.println("Searched: Survivor Inside Sending Signal! ");
+    PlayBuzzer();
+    FlashLED();
+  } else {
+    Serial1.println("Searched: Survivor Has Left The Room");
+  }
+}
+
+void AddEncoderValues( int leftencodervalue, int rightencodervalue)
+{
+  totalDistanceValueRightEncoder += leftencodervalue;
+  totalDistanceValueLeftEncoder += rightencodervalue;
+}
+void ResetEncoderTotalValues()
+{
+  totalDistanceValueRightEncoder = 0;
+  totalDistanceValueLeftEncoder = 0;
+}
+
+void AddEncoderValuesIntoArray()
+{
+  rightDistanceEncoderArray[indexPositionDistance] = totalDistanceValueRightEncoder;
+  leftDistanceEncoderArray[indexPositionDistance]  = totalDistanceValueLeftEncoder;
+  indexPositionDistance++;
+}
+
+void AddMovementValueIntoArray(char movement)
+{
+  movementArray[indexPositionMovement] = movement;
+  indexPositionMovement++;
+}
+
+//void AddBoolValueToArray(bool hasroom, bool hascivilian)
+//{
+//  RoomHasCivilian[indexPositionCorridorRooms] = hascivilian;
+//  CorridorHasRoom[indexPositionCorridorRooms] = hasroom;
+//  indexPositionCorridorRooms++;
+//}
+
+void InitArrays()
+{
+  indexPositionDistance = 0;
+  indexPositionMovement = 0;
+  //indexPositionCorridorRooms = 0;
+  AmountOfRooms = 1;
+  ReturnHomeIsTrue = false;
+
+  for (int i = 0; i < 20; i++)
+  {
+   // RoomHasCivilian[i] = false;
+   // CorridorHasRoom[i] = false;
+    rightDistanceEncoderArray[i] = 0;
+    leftDistanceEncoderArray[i]  = 0;
+    movementArray[i] = '#';
+  }
+}
+
+void MovementForwardUsingDistance()
+{
+  turnSensorReset();
+  int error;
+  int correction;
+  int currentSpeedLeft = MAIN_SPEED;
+  int currentSpeedRight = MAIN_SPEED;
+  int tempLeft = 0;
+  int tempRight  = 0;
+
+  encoders.getCountsAndResetLeft();
+  encoders.getCountsAndResetRight();
+  int countsLeft =  encoders.getCountsLeft();
+  int countsRight = encoders.getCountsRight();
+  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
+  //Serial1.println(totalDistanceValueLeftEncoder);
+  //Serial1.println(totalDistanceValueRightEncoder);
+  while (countsLeft + tempLeft < totalDistanceValueLeftEncoder + TJUNCTION && countsRight + tempRight < totalDistanceValueRightEncoder + TJUNCTION)
+  {
+    delay(2);
+    countsLeft = encoders.getCountsLeft();
+    countsRight = encoders.getCountsRight();
+    error = countsLeft - STRAIGHTFACTOR * countsRight;
+    correction = Kp * error;
+    currentSpeedRight = MAIN_SPEED + correction;
+    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
+    lineSensors.read(lineSensorValues);
+    
+    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
+    {
+      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+      delay(REVERSE_DURATION);
+      MotorSpeedStop();
+
+      if (lineSensorValues[2] > QTR_THRESHOLD)
+      {
+        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
+        delay(TURN_DURATION);
+        MotorSpeedStop();
+        tempLeft += encoders.getCountsAndResetLeft();
+        tempRight += encoders.getCountsAndResetRight();
+      }
+      else
+      {
+        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
+        delay(TURN_DURATION);
+        MotorSpeedStop();
+        tempLeft += encoders.getCountsAndResetLeft();
+        tempRight += encoders.getCountsAndResetRight();
+      }
+
+      countsLeft = encoders.getCountsLeft();
+      countsRight = encoders.getCountsRight();
+    }
+  }
+}
+
+void MovementForwardUsingDistanceAutomated()
+{
+  turnSensorReset();
+  int error = 0;
+  int correction = 0;
+  int currentSpeedLeft = MAIN_SPEED;
+  int currentSpeedRight = MAIN_SPEED;
+  int tempLeft = 0;
+  int tempRight  = 0;
+
+  encoders.getCountsAndResetLeft();
+  encoders.getCountsAndResetRight();
+  int countsLeft =  encoders.getCountsLeft();
+  int countsRight = encoders.getCountsRight();
+  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
+
+  while (countsLeft + tempLeft < leftDistanceEncoderArray[indexPositionDistance] && countsRight + tempRight < rightDistanceEncoderArray[indexPositionDistance])
+  {
+    delay(2);
+    countsLeft = encoders.getCountsLeft();
+    countsRight = encoders.getCountsRight();
+    error = countsLeft - STRAIGHTFACTOR * countsRight;
+    correction = Kp * error;
+    currentSpeedRight = MAIN_SPEED + correction;
+    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
+    lineSensors.read(lineSensorValues);
+    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
+    {
+      delay(50);
+     lineSensors.read(lineSensorValues);
+      printReadingsToSerial();
+      if ((lineSensorValues[0] > QTR_THRESHOLD
+           && lineSensorValues[1] > QTR_THRESHOLD)
+          || (lineSensorValues[2] > QTR_THRESHOLD
+              && lineSensorValues[1] > QTR_THRESHOLD))
+      {
+        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+        delay(REVERSE_DURATION);
+        MotorSpeedStop();
+        break;
+      }
+      else
+      {
+        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+        delay(REVERSE_DURATION);
+        MotorSpeedStop();
+
+        if (lineSensorValues[2] > QTR_THRESHOLD)
+        {
+          motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
+          delay(TURN_DURATION);
+          MotorSpeedStop();
+          tempLeft += encoders.getCountsAndResetLeft();
+          tempRight += encoders.getCountsAndResetRight();
+        }
+        else
+        {
+          motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
+          delay(TURN_DURATION);
+          MotorSpeedStop();
+          tempLeft += encoders.getCountsAndResetLeft();
+          tempRight += encoders.getCountsAndResetRight();
+        }
+        countsLeft = encoders.getCountsLeft();
+        countsRight = encoders.getCountsRight();
+      }
+    }
+    MotorSpeedStop();
+  }
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+void printReadingsToSerial()
+{
+  char buffer[80];
+  sprintf(buffer, "%4d %4d %4d %c\n",
+          lineSensorValues[0],
+          lineSensorValues[1],
+          lineSensorValues[2]
+         );
+  Serial.print(buffer);
+}
+
+//void printReadingsToSerials()
+//{
+//  char buffer[80];
+//  sprintf(buffer, "%1d %1d %c\n",
+//          leftValue, rightValue
+//         );
+//  Serial1.print(buffer);
+//}
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//void TurnLeftUsingEncoders()
+//{
+//  MotorSpeedTurnLeft();
+//  int error;
+//  int correction;
+//  int currentSpeedLeft = TURN_SPEED;
+//  int currentSpeedRight = TURN_SPEED;
+//
+//  encoders.getCountsAndResetLeft();
+//  encoders.getCountsAndResetRight();
+//  int countsLeft =  encoders.getCountsLeft();
+//  int countsRight = encoders.getCountsRight();
+//
+//  while ((countsLeft < ENCODER_TURN_LIMIT) && (countsRight < ENCODER_TURN_LIMIT))
+//  {
+//
+//    countsLeft = -encoders.getCountsLeft();
+//    countsRight = encoders.getCountsRight();
+//    error = countsLeft - STRAIGHTFACTOR * countsRight;
+//    correction = Kp * error;
+//    currentSpeedRight = TURN_SPEED + correction;
+//    motors.setRightSpeed(currentSpeedRight);
+//  }
+//        if ((countsLeft < ENCODER_TURN_LIMIT))
+//        {
+//          while ((countsLeft < ENCODER_TURN_LIMIT))
+//          {
+//            countsLeft = -encoders.getCountsLeft();
+//            countsRight = encoders.getCountsRight();
+//            motors.setRightSpeed(-100);
+//
+//          }
+//        }
+//        else if (countsRight < ENCODER_TURN_LIMIT)
+//        {
+//          while ((countsRight < ENCODER_TURN_LIMIT))
+//          {
+//            countsLeft = -encoders.getCountsLeft();
+//            countsRight = encoders.getCountsRight();
+//            motors.setLeftSpeed(100);
+//
+//          }
+//        }
+//  motors.setLeftSpeed(0);
+//  motors.setRightSpeed(0);
+//  //reset encoders, we only want the encoders for when it's going straight.
+//  Serial1.println(encoders.getCountsAndResetLeft());
+//  Serial1.println(encoders.getCountsAndResetRight());
+//  turnSensorReset();
+//}
+
+//void TurnRightUsingEncoders()
+//{
+//  MotorSpeedTurnRight();
+//  int error;
+//  int correction;
+//  int currentSpeedLeft = TURN_SPEED;
+//  int currentSpeedRight = TURN_SPEED;
+//
+//  encoders.getCountsAndResetLeft();
+//  encoders.getCountsAndResetRight();
+//  int countsLeft =  encoders.getCountsLeft();
+//  int countsRight = encoders.getCountsRight();
+//  while ((countsRight < ENCODER_TURN_LIMIT) && (countsLeft < ENCODER_TURN_LIMIT))
+//  {
+//    countsLeft = encoders.getCountsLeft();
+//    countsRight = -encoders.getCountsRight();
+//    error = countsRight - STRAIGHTFACTOR * countsLeft;
+//    correction = Kp * error;
+//    currentSpeedLeft = TURN_SPEED + correction;
+//    motors.setLeftSpeed(currentSpeedLeft);
+//  }
+//   if (countsRight < ENCODER_TURN_LIMIT)
+//  {
+//    while ((countsRight < ENCODER_TURN_LIMIT))
+//    {
+//      countsLeft = encoders.getCountsLeft();
+//      countsRight = -encoders.getCountsRight();
+//      motors.setLeftSpeed(-100);
+//
+//    }
+//  }
+//  else if ((countsLeft < ENCODER_TURN_LIMIT))
+//  {
+//    while ((countsLeft < ENCODER_TURN_LIMIT))
+//    {
+//      countsLeft = encoders.getCountsLeft();
+//      countsRight = -encoders.getCountsRight();
+//      motors.setRightSpeed(100);
+//
+//    }
+//  }
+//  motors.setLeftSpeed(0);
+//  motors.setRightSpeed(0);
+//  //reset encoders, we only want the encoders for when it's going straight.
+//  //Serial1.println(encoders.getCountsAndResetLeft());
+//  encoders.getCountsAndResetLeft();
+//  encoders.getCountsAndResetRight();
+//  //Serial1.println(encoders.getCountsAndResetRight());
+//  turnSensorReset();
+//}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/***
+    Was used for when I wanted to search a room, I would set the amount I want
+    the encoders to get to, by passing in the number through the parameter. Since
+    the room is small enough that I can scan without havint to move into and got
+    confirmation I didn't have to have it. I removed it, however if the room was
+    bigger then I would need to use this.
+***/
+//void MovementForwardUsingDistance(int distance)
+//{
+//  turnSensorReset();
+//  int error;
+//  int correction;
+//  int currentSpeedLeft = MAIN_SPEED;
+//  int currentSpeedRight = MAIN_SPEED;
+//  encoders.getCountsAndResetLeft();
+//  encoders.getCountsAndResetRight();
+//  int countsLeft =  encoders.getCountsLeft();
+//  int countsRight = encoders.getCountsRight();
+//
+//  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
+//  while (countsLeft < distance && countsRight < distance)
+//  {
+//    delay(2);
+//    countsLeft = encoders.getCountsLeft();
+//    countsRight = encoders.getCountsRight();
+//    error = countsLeft - STRAIGHTFACTOR * countsRight;
+//    correction = Kp * error;
+//    currentSpeedRight = MAIN_SPEED + correction;
+//    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
+//lineSensors.read(lineSensorValues);
+//printReadingsToSerial();
+//    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
+//    {
+//      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
+//      delay(REVERSE_DURATION);
+//      MotorSpeedStop();
+//
+//      if (lineSensorValues[2] > QTR_THRESHOLD)
+//      {
+//        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
+//        delay(TURN_DURATION);
+//        MotorSpeedStop();
+//      }
+//      else
+//      {
+//        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
+//        delay(TURN_DURATION);
+//        MotorSpeedStop();
+//      }
+//    }
+//    printReadingsToSerial();
+//  }
+//}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //bool ScanRoomProximityTurnRightEncoder(bool objectseen)
 //{
@@ -638,654 +1257,3 @@ bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
 //  turnSensorReset();
 //  return objectseen;
 //}
-
-void MotorSpeedTurnLeft()
-{
-  motors.setLeftSpeed(-TURN_SPEED);
-  motors.setRightSpeed(TURN_SPEED);
-}
-void MotorSpeedTurnRight()
-{
-  motors.setLeftSpeed(TURN_SPEED);
-  motors.setRightSpeed(-TURN_SPEED);
-}
-void MotorSpeedForward()
-{
-  motors.setLeftSpeed(MAIN_SPEED);
-  motors.setRightSpeed(MAIN_SPEED);
-}
-void MotorSpeedBackward()
-{
-  motors.setLeftSpeed(-MAIN_SPEED);
-  motors.setRightSpeed(-MAIN_SPEED);
-}
-void MotorSpeedStop()
-{
-  motors.setLeftSpeed(0);
-  motors.setRightSpeed(0);
-}
-
-static void lineSensorCalibrateSetup()
-{
-  lcd.clear();
-
-  // Delay so the robot does not move while the user is still
-  // touching the button.
-  delay(1000);
-
-  // We use the gyro to turn so that we don't turn more than
-  // necessary, and so that if there are issues with the gyro
-  // then you will know before actually starting the robot.
-
-  turnSensorReset();
-
-  // Turn to the left 90 degrees.
-  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  turnSensorReset();
-  // Turn to the right 90 degrees.
-  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-
-  turnSensorReset();
-  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-
-  turnSensorReset();
-  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-
-  turnSensorReset();
-  // Turn back to center using the gyro.
-  turnSensorReset();
-  motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  turnSensorReset();
-  // Turn to the right 90 degrees.
-  motors.setSpeeds(FORWARD_SPEED, -FORWARD_SPEED);
-  while ((int32_t)turnAngle > -turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  turnSensorReset();
-  motors.setSpeeds(FORWARD_SPEED, -FORWARD_SPEED);
-  while ((int32_t)turnAngle > -turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  turnSensorReset();
-  motors.setSpeeds(FORWARD_SPEED, -FORWARD_SPEED);
-  while ((int32_t)turnAngle > -turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  turnSensorReset();
-  motors.setSpeeds(FORWARD_SPEED, -FORWARD_SPEED);
-  while ((int32_t)turnAngle > -turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  turnSensorReset();
-
-  // Stop the motors.
-  motors.setSpeeds(0, 0);
-}
-
-void MovementGoingForward()
-{
-  turnSensorReset();
-  int error;
-  int correction;
-  int currentSpeedLeft = MAIN_SPEED;
-  int currentSpeedRight = MAIN_SPEED;
-  int countsLeft = encoders.getCountsAndResetLeft();
-  int countsRight = encoders.getCountsAndResetRight();
-  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-  while (true)
-  {
-    delay(2);
-    incomingByte = Serial1.read();
-    if (incomingByte == 'e')
-    {
-      MotorSpeedStop();
-      SwitchCaseForSearchingRoomInMovement();
-      break;
-    }
-    delay(2);
-    countsLeft = encoders.getCountsLeft();
-    countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
-    correction = Kp * error;
-    currentSpeedRight = MAIN_SPEED + correction;
-    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
-    lineSensors.read(lineSensorValues);
-    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-    {
-      delay(50);
-      lineSensors.read(lineSensorValues);
-      printReadingsToSerial();
-      if ((lineSensorValues[0] > QTR_THRESHOLD
-           && lineSensorValues[1] > QTR_THRESHOLD)
-          || (lineSensorValues[2] > QTR_THRESHOLD
-              && lineSensorValues[1] > QTR_THRESHOLD))
-      {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(200);
-        MotorSpeedStop();
-        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-        AddEncoderValuesIntoArray();
-        Serial1.println(leftDistanceEncoderArray[indexPositionDistance - 1]);
-        Serial1.println(rightDistanceEncoderArray[indexPositionDistance - 1]);
-        indexPositionCorridorRooms++;
-        break;
-      }
-      else
-      {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(REVERSE_DURATION);
-        MotorSpeedStop();
-        if (lineSensorValues[2] > QTR_THRESHOLD)
-        {
-          motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-          delay(TURN_DURATION);
-          MotorSpeedStop();
-          AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-          delay(100);
-          //break;
-        }
-        else
-        {
-          motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-          delay(TURN_DURATION);
-          MotorSpeedStop();
-          AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-          delay(100);
-          //break;
-        }
-      }
-      printReadingsToSerial();
-    }
-  }
-}
-
-void SwitchCaseForAutomaticBaseReturn()
-{
-  //Do the first movement, no need to put in w command.
-  MovementForwardUsingDistanceAutomated();
-  while (true)
-  {
-    char nextMovement = movementArray[indexPositionMovement];
-    switch (nextMovement)
-    {
-      case 'a':
-        Serial1.println("Returning Home: Turning Left");
-        TurnLeft(90);
-        indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
-        MovementForwardUsingDistanceAutomated();
-        break;
-
-      case 'd':
-        Serial1.println("Returning Home: Turning Right");
-        TurnRight(90);
-        indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
-        MovementForwardUsingDistanceAutomated();
-        break;
-
-      case 'z':
-        Serial1.println("Returning Home: Searching Left Room For Survivor");
-        TurnLeftScanRoom();
-        indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
-        MovementForwardUsingDistanceAutomated();
-        break;
-
-      case 'x':
-         Serial1.println("Returning Home: Searching Right Room For Survivor");
-        TurnRightScanRoom();
-        indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
-        MovementForwardUsingDistanceAutomated();
-        break;
-
-      case 'b':
-        Serial1.println("Returning Home: Moving Forward");
-        indexPositionDistance--;
-        MovementForwardUsingDistanceAutomated();
-        indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Turning 180");
-        TurnRight(90);
-        TurnRight(90);
-        Serial1.println("Returning Home: Moving Forward");
-        MovementForwardUsingDistanceAutomated();
-        break;
-
-      case 'n':
-        indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
-        MovementForwardUsingDistanceAutomated();
-
-    }
-    //Serial1.println(indexPositionMovement)
-    if (indexPositionDistance == 0)
-    {
-      TurnOffLED();
-      Serial1.println("Returning Home: Zumo Has Returned To Home Base");
-      InitArrays();
-      break;
-    }
-  }
-}
-
-void SwitchCaseForSearchingRoomInMovement()
-{
-  bool turnOffLoop = false;
-  do {
-    incomingByte = Serial1.read();
-
-    switch (incomingByte)
-    {
-      case't':
-        Serial1.println("Manual: Moving Forward");
-        MotorSpeedForward();
-        delay(10);
-        MotorSpeedStop();
-        Serial1.flush();
-        break;
-
-      case 'f':
-        Serial1.println("Adjust: Turning Left");
-        MotorSpeedTurnLeft();
-        delay(10);
-        MotorSpeedStop();
-        turnSensorReset();
-        Serial1.flush();
-        break;
-
-      case 'y':
-        Serial1.println("Adjust: Turning Right");
-        MotorSpeedTurnRight();
-        delay(10);
-        MotorSpeedStop();
-        turnSensorReset();
-        Serial1.flush();
-        break;
-
-      case 'g':
-        Serial1.println("Adjust: Moving Backwards");
-        MotorSpeedBackward();
-        delay(10);
-        MotorSpeedStop();
-        Serial1.flush();
-        break;
-
-      case 'i':
-        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-        Serial1.println("Automated: Moving Forward");
-        MovementGoingForward();
-        Serial1.flush();
-        turnOffLoop = true;
-        break;
-
-      case 'z':
-        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-        AddEncoderValuesIntoArray();
-        Serial1.println("Automated: Searching Room On The Left");
-        AddMovementValueIntoArray('x');
-        TurnLeftScanRoom();
-        turnOffLoop = true;
-        Serial1.flush();
-        break;
-
-      case 'x':
-        AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-        AddEncoderValuesIntoArray();
-        Serial1.println("Automated: Searching Room On The Right");
-        AddMovementValueIntoArray('z');
-        TurnRightScanRoom();
-        turnOffLoop = true;
-        Serial1.flush();
-        break;
-
-      case 'e':
-        MotorSpeedStop();
-        Serial1.println("Stopped");
-        Serial1.flush();
-        break;
-    }
-  } while (turnOffLoop != true);
-}
-
-void TurnLeftScanRoom()
-{
-  MotorSpeedStop();
-  delay(100);
-  TurnLeft(90);
-  ScanRoom();
-  delay(400);
-  TurnRight(90);
-  //MovementGoingForward();
-}
-void TurnRightScanRoom()
-{
-  MotorSpeedStop();
-  delay(100);
-  TurnRight(90);
-  ScanRoom();
-  delay(400);
-  TurnLeft(90);
-  // MovementGoingForward();
-}
-void ScanRoom()
-{
-  bool objectSeen = false;
-  delay(200);
-  objectSeen = ScanRoomProximityTurnLeftGyro(objectSeen, 45);
-  delay(200);
-  objectSeen = ScanRoomProximityTurnRightGyro(objectSeen, 45);
-  delay(200);
-  objectSeen = ScanRoomProximityTurnRightGyro(objectSeen, 45);
-  delay(200);
-  objectSeen = ScanRoomProximityTurnLeftGyro(objectSeen, 45);
-  if (!ReturnHomeIsTrue)
-  {
-    SearchRoomMessagesBeforeReturningHome(objectSeen);
-  }
-  else
-  {
-    SearchRoomMeessagesReturningHome(objectSeen);
-  }
-}
-
-void SearchRoomMessagesBeforeReturningHome(bool objectseen)
-{
-  if (objectseen) {
-    Serial1.print("#Room ");
-    Serial1.print(AmountOfRooms);
-    Serial1.println(" Searched: Survivor Inside !");
-    AmountOfRooms++;
-    AddBoolValueToArray(true, true);
-
-  } else {
-    //Change it to n which stands for nothing, means we can skip searching a room in the automation
-    //- 1 since when it was added position would have been incremented.
-    movementArray[indexPositionMovement - 1] = 'n';
-    Serial1.print("#Room ");
-    Serial1.print(AmountOfRooms);
-    Serial1.println("Searched: Room Empty !");
-    AddBoolValueToArray(true, false);
-  }
-}
-
-void SearchRoomMeessagesReturningHome(bool objectseen)
-{
-  if (objectseen) {
-    Serial1.println("Searched: Survivor Inside Sending Signal! ");
-    PlayBuzzer();
-    FlashLED();
-  } else {
-    Serial1.println("Searched: Survivor Has Left The Room");
-  }
-}
-
-void AddEncoderValues( int leftencodervalue, int rightencodervalue)
-{
-  totalDistanceValueRightEncoder += leftencodervalue;
-  totalDistanceValueLeftEncoder += rightencodervalue;
-  Serial1.println(totalDistanceValueRightEncoder);
-  Serial1.println(totalDistanceValueLeftEncoder);
-}
-void ResetEncoderTotalValues()
-{
-  totalDistanceValueRightEncoder = 0;
-  totalDistanceValueLeftEncoder = 0;
-}
-
-void AddEncoderValuesIntoArray()
-{
-  rightDistanceEncoderArray[indexPositionDistance] = totalDistanceValueRightEncoder;
-  leftDistanceEncoderArray[indexPositionDistance]  = totalDistanceValueLeftEncoder;
-  indexPositionDistance++;
-}
-
-void AddMovementValueIntoArray(char movement)
-{
-  movementArray[indexPositionMovement] = movement;
-  indexPositionMovement++;
-}
-
-void AddBoolValueToArray(bool hasroom, bool hascivilian)
-{
-  RoomHasCivilian[indexPositionCorridorRooms] = hascivilian;
-  CorridorHasRoom[indexPositionCorridorRooms] = hasroom;
-  indexPositionCorridorRooms++;
-}
-
-void InitArrays()
-{
-  indexPositionDistance = 0;
-  indexPositionMovement = 0;
-  indexPositionCorridorRooms = 0;
-  AmountOfRooms = 1;
-  ReturnHomeIsTrue = false;
-  
-  for (int i = 0; i < 20; i++)
-  {
-    RoomHasCivilian[i] = false;
-    CorridorHasRoom[i] = false;
-    rightDistanceEncoderArray[i] = 0;
-    leftDistanceEncoderArray[i]  = 0;
-    movementArray[i] = '#';
-  }
-}
-
-
-void MovementForwardUsingDistance()
-{
-  turnSensorReset();
-  int error;
-  int correction;
-  int currentSpeedLeft = MAIN_SPEED;
-  int currentSpeedRight = MAIN_SPEED;
-  int tempLeft = 0;
-  int tempRight  = 0;
-
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-  //Serial1.println(totalDistanceValueLeftEncoder);
-  //Serial1.println(totalDistanceValueRightEncoder);
-  while (countsLeft + tempLeft < totalDistanceValueLeftEncoder + TJUNCTION && countsRight + tempRight < totalDistanceValueRightEncoder + TJUNCTION)
-  {
-    delay(2);
-    countsLeft = encoders.getCountsLeft();
-    countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
-    correction = Kp * error;
-    currentSpeedRight = MAIN_SPEED + correction;
-    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
-    lineSensors.read(lineSensorValues);
-    printReadingsToSerial();
-    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-    {
-      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-      delay(REVERSE_DURATION);
-      MotorSpeedStop();
-
-      if (lineSensorValues[2] > QTR_THRESHOLD)
-      {
-        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-        delay(TURN_DURATION);
-        MotorSpeedStop();
-        tempLeft += encoders.getCountsAndResetLeft();
-        tempRight += encoders.getCountsAndResetRight();
-      }
-      else
-      {
-        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-        delay(TURN_DURATION);
-        MotorSpeedStop();
-        tempLeft += encoders.getCountsAndResetLeft();
-        tempRight += encoders.getCountsAndResetRight();
-      }
-
-      countsLeft = encoders.getCountsLeft();
-      countsRight = encoders.getCountsRight();
-    }
-  }
-  Serial1.println(countsLeft + tempLeft);
-  Serial1.println(countsRight + tempRight);
-}
-
-
-void MovementForwardUsingDistance(int distance)
-{
-  turnSensorReset();
-  int error;
-  int correction;
-  int currentSpeedLeft = MAIN_SPEED;
-  int currentSpeedRight = MAIN_SPEED;
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-
-  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-  while (countsLeft < distance && countsRight < distance)
-  {
-    delay(2);
-    countsLeft = encoders.getCountsLeft();
-    countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
-    correction = Kp * error;
-    currentSpeedRight = MAIN_SPEED + correction;
-    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
-    //lineSensors.read(lineSensorValues);
-    //printReadingsToSerial();
-    //    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-    //    {
-    //      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-    //      delay(REVERSE_DURATION);
-    //      MotorSpeedStop();
-    //
-    //      if (lineSensorValues[2] > QTR_THRESHOLD)
-    //      {
-    //        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-    //        delay(TURN_DURATION);
-    //        MotorSpeedStop();
-    //      }
-    //      else
-    //      {
-    //        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-    //        delay(TURN_DURATION);
-    //        MotorSpeedStop();
-    //      }
-    //    }
-    //    printReadingsToSerial();
-  }
-}
-
-
-void MovementForwardUsingDistanceAutomated()
-{
-  turnSensorReset();
-  int error = 0;
-  int correction = 0;
-  int currentSpeedLeft = MAIN_SPEED;
-  int currentSpeedRight = MAIN_SPEED;
-  int tempLeft = 0;
-  int tempRight  = 0;
-
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-
-  while (countsLeft + tempLeft < leftDistanceEncoderArray[indexPositionDistance] && countsRight + tempRight < rightDistanceEncoderArray[indexPositionDistance])
-  {
-    delay(2);
-    countsLeft = encoders.getCountsLeft();
-    countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
-    correction = Kp * error;
-    currentSpeedRight = MAIN_SPEED + correction;
-    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
-    lineSensors.read(lineSensorValues);
-    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-    {
-      delay(50);
-      lineSensors.read(lineSensorValues);
-      printReadingsToSerial();
-      if ((lineSensorValues[0] > QTR_THRESHOLD
-           && lineSensorValues[1] > QTR_THRESHOLD)
-          || (lineSensorValues[2] > QTR_THRESHOLD
-              && lineSensorValues[1] > QTR_THRESHOLD))
-      {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(REVERSE_DURATION);
-        MotorSpeedStop();
-        break;
-      }
-      else 
-      {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(REVERSE_DURATION);
-        MotorSpeedStop();
-
-        if (lineSensorValues[2] > QTR_THRESHOLD)
-        {
-          motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-          delay(TURN_DURATION);
-          MotorSpeedStop();
-          tempLeft += encoders.getCountsAndResetLeft();
-          tempRight += encoders.getCountsAndResetRight();
-        }
-        else
-        {
-          motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-          delay(TURN_DURATION);
-          MotorSpeedStop();
-          tempLeft += encoders.getCountsAndResetLeft();
-          tempRight += encoders.getCountsAndResetRight();
-        }
-        countsLeft = encoders.getCountsLeft();
-        countsRight = encoders.getCountsRight();
-      }
-    }
-    MotorSpeedStop();
-  }
-}
