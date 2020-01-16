@@ -42,10 +42,11 @@
  * get into positon. This allows us to know if we hit a wall straight or if we 
  * hit the wall at an angle.
  * 
- * Rotations are fairly straight forward we used the Gyro to workout what angle we
- * are at we need to make sure we update the angle each loop so the gyro knows the 
- * how much it has turned by. You then want to make sure you reset the gyro once 
- * you're finished or your gyro data will be wrong.
+ * Rotations are fairly straight forward we used the Gyro to workout what angle I
+ * am at, I needed to make sure we updated the angle each loop so the gyro knows 
+ * how much it has turned by. You then want to make sure you reset the gyro back to 
+ * zero once  you're finished or your gyro data may become wrong. Only do this on 
+ * any rotations and not moving forward or reversing etc. it messes up the values.
  * https://github.com/pvcraven/zumo_32u4_examples/blob/master/TurnExample/TurnExample.ino
  * ^I used this example in my code, I did use the Maze Solver example but found this one better.
  * I had tested rotating by just using encoders which is commented out in my code somewhere and delays
@@ -54,7 +55,10 @@
  * to the Gyro to compensate for the power difference in the motors that had improved the accuracy
  * by a small margin.
  * 
- * 
+ * The proximity snesors was probably the most simplest to get working, this allows us to know if
+ * there is a object that has been detected in a room. I had to play around with the Proximity Sensor
+ * Threshold but I found 5 - 6 was the best. I used the SumoProximitySensors Zumo32u4 example to give 
+ * me a understanding of how to apply it and was able to get it working fine on the first try.
 */
 
 #include <Wire.h>

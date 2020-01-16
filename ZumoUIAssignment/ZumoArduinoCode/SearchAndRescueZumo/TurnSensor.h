@@ -19,11 +19,9 @@ const int32_t turnAngle1 = (turnAngle45 + 22) / 45;
 void turnSensorSetup();
 void turnSensorReset();
 void turnSensorUpdate();
-void turnSensorReadToSerial();
 extern uint32_t turnAngle;
 extern int16_t turnRate;
 
 // These objects must be defined in your sketch.
 extern Zumo32U4ButtonA buttonA;
-extern Zumo32U4LCD lcd;
 extern L3G gyro;

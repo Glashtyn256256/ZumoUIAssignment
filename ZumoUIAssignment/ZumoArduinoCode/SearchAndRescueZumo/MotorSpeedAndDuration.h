@@ -26,6 +26,10 @@ and provides functions that set the motorspeeds.*/
 #define AUTO_REVERSE_SPEED 150
 #define AUTO_TURN_SPEED    200
 
+#define ADJUST_FORWARD_SPEED 200
+#define ADJUST_REVERSE_SPEED 200
+#define ADJUST_TURN_SPEED 200
+
 #define SPEED_STOP 0
 
 //How long I want the delay to be when the Zumo has ran into the wall.
@@ -49,6 +53,11 @@ void AutomatedReverseSpeed();
 void AutomatedTurnLeftSpeed();
 void AutomatedTurnRightSpeed();
 
+
+void AdjustForwardSpeed();
+void AdjustReverseSpeed();
+void AdjustTurnLeftSpeed();
+void AdjustTurnRightSpeed();
 //Sets the speeds for when we want to stop.
 void SpeedStop();
 

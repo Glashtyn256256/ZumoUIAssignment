@@ -54,9 +54,6 @@ void turnSensorSetup()
   // High-pass filter disabled
   gyro.writeReg(L3G::CTRL5, 0b00000000);
 
-  lcd.clear();
-  Serial.print(F("Gyro cal"));
-
   // Turn on the yellow LED in case the LCD is not available.
   ledYellow(1);
 
@@ -79,22 +76,13 @@ void turnSensorSetup()
 
   // Display the angle (in degrees from -180 to 180) until the
   // user presses A.
-  lcd.clear();
   turnSensorReset();
   while (!buttonA.getSingleDebouncedRelease())
   {
     turnSensorUpdate();
-    lcd.gotoXY(0, 0);
-    turnSensorReadToSerial();
-   //Serial.print((((int32_t)turnAngle >> 16) * 360) >> 16);
-    lcd.print(F("   "));
   }
-  lcd.clear();
 }
-void turnSensorReadToSerial()
-{
-  //Serial.print((((int32_t)turnAngle >> 16) * 360) >> 16);
-}
+
 // This should be called to set the starting point for measuring
 // a turn.  After calling this, turnAngle will be 0.
 void turnSensorReset()
@@ -130,5 +118,4 @@ void turnSensorUpdate()
   // (0.07 dps/digit) * (1/1000000 s/us) * (2^29/45 unit/degree)
   // = 14680064/17578125 unit/(digit*us)
   turnAngle += (int64_t)d * 14680064 / 17578125;
-  turnSensorReadToSerial();
 }

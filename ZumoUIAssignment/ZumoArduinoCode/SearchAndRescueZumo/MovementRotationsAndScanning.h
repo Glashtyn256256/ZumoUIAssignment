@@ -11,16 +11,3 @@
 #pragma once
 
 #include <Zumo32U4.h>
-
-#define FLASH_DURATION 100 //ms
-
-//We call this when we want a tune to be played for us on the buzzer.
-void PlayBuzzer();
-
-/* We call these functions to either turn off the LED lights, turn 
-on the LED lights or make the LED lights flash.*/
-void TurnOffLED();
-void TurnOnLED();
-void FlashLED();
-
-extern Zumo32U4Buzzer buzzer;

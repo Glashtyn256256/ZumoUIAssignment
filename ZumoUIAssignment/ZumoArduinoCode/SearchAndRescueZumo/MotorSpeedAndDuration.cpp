@@ -32,6 +32,19 @@ void AutomatedTurnRightSpeed(){
    motors.setSpeeds(AUTO_TURN_SPEED, -AUTO_TURN_SPEED);
 }
 
+void AdjustForwardSpeed(){
+  motors.setSpeeds(ADJUST_FORWARD_SPEED, ADJUST_FORWARD_SPEED);
+}
+void AdjustReverseSpeed(){
+  motors.setSpeeds(-ADJUST_REVERSE_SPEED, -ADJUST_REVERSE_SPEED);
+}
+void AdjustTurnLeftSpeed(){
+  motors.setSpeeds(-ADJUST_TURN_SPEED, ADJUST_TURN_SPEED);
+}
+void AdjustTurnRightSpeed(){
+  motors.setSpeeds(ADJUST_TURN_SPEED, -ADJUST_TURN_SPEED);
+}
+
 void SpeedStop(){
   motors.setSpeeds(SPEED_STOP, SPEED_STOP);
 }
