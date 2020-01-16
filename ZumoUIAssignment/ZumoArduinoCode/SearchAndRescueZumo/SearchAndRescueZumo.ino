@@ -1,5 +1,7 @@
 #include <Zumo32U4.h>
 #include "TurnSensor.h"
+#include "BuzzerAndLED.h"
+#include "SerialMessages.h"
 
 //Serial1 communicates over XBee
 //Serial communicates over USB cable
@@ -67,36 +69,36 @@ void setup() {
 
 }
 
-void PlayBuzzer()
-{
-  buzzer.play("!L16 V8 cdefgab>cbagfedc");
-}
-
-void TurnOffLED()
-{
-  ledRed(0);
-  ledYellow(0);
-  ledGreen(0);
-}
-void TurnOnLED()
-{
-  ledRed(1);
-  ledYellow(1);
-  ledGreen(1);
-}
-void FlashLED()
-{
-  TurnOffLED();
-  delay(100);
-  for (int i = 0; i < 10; i++)
-  {
-    TurnOnLED();
-    delay(100);
-    TurnOffLED();
-  }
-  delay(100);
-  TurnOnLED();
-}
+//void PlayBuzzer()
+//{
+//  buzzer.play("!L16 V8 cdefgab>cbagfedc");
+//}
+//
+//void TurnOffLED()
+//{
+//  ledRed(0);
+//  ledYellow(0);
+//  ledGreen(0);
+//}
+//void TurnOnLED()
+//{
+//  ledRed(1);
+//  ledYellow(1);
+//  ledGreen(1);
+//}
+//void FlashLED()
+//{
+//  TurnOffLED();
+//  delay(100);
+//  for (int i = 0; i < 10; i++)
+//  {
+//    TurnOnLED();
+//    delay(100);
+//    TurnOffLED();
+//  }
+//  delay(100);
+//  TurnOnLED();
+//}
 
 
 
@@ -113,31 +115,36 @@ void loop() {
   switch (incomingByte)
   {
     case'w':
-      Serial1.println("Manual: Moving Forward");
+      ManualMessage();
+      MoveForwardMessage();
       MotorSpeedForward();
       Serial1.flush();
       break;
 
     case 'a':
-      Serial1.println("Manual: Turning left");
+      ManualMessage();
+      TurnLeftMessage();
       MotorSpeedTurnLeft();
       Serial1.flush();
       break;
 
     case 'd':
-      Serial1.println("Manual: Turning right");
+      ManualMessage();
+      TurnRightMessage();
       MotorSpeedTurnRight();
       Serial1.flush();
       break;
 
     case 's':
-      Serial1.println("Manual: Moving Backwards");
+      ManualMessage();
+      MoveBackwardsMessage();
       MotorSpeedBackward();
       Serial1.flush();
       break;
 
     case't':
-      Serial1.println("Adjust: Moving Forward");
+      AdjustMessage();
+      MoveForwardMessage();
       MotorSpeedForward();
       delay(10);
       MotorSpeedStop();
@@ -145,7 +152,8 @@ void loop() {
       break;
 
     case 'f':
-      Serial1.println("Adjust: Turning Left");
+      AdjustMessage();
+      TurnLeftMessage();
       MotorSpeedTurnLeft();
       delay(10);
       MotorSpeedStop();
@@ -154,7 +162,8 @@ void loop() {
       break;
 
     case 'y':
-      Serial1.println("Adjust: Turning Right");
+      AdjustMessage();
+      TurnRightMessage();
       MotorSpeedTurnRight();
       delay(10);
       MotorSpeedStop();
@@ -163,7 +172,8 @@ void loop() {
       break;
 
     case 'g':
-      Serial1.println("Adjust: Moving Backwards");
+      AdjustMessage();
+      MoveBackwardsMessage();
       MotorSpeedBackward();
       delay(10);
       MotorSpeedStop();
@@ -173,59 +183,74 @@ void loop() {
     case 'e':
       MotorSpeedStop();
       turnSensorReset();
-      Serial1.println("Movement Stopped");
+      MovementStoppedMessage();
       Serial1.flush();
       break;
 
     case 'q':
-      Serial1.println("Manual: Turning Left 90 Degrees");
+      ManualMessage();
+      TurnLeftDegreesMessage();
       TurnLeft(90);
       AddMovementValueIntoArray('d');
-      Serial1.println("Manual: Turning Left Completed, Press C To Move Forward");
+      ManualMessage();
+      TurningCompletedMessage();
+      PressToContinueMessage();
       Serial1.flush();
       break;
 
     case 'r':
-      Serial1.println("Manual: Turning Right 90 Degrees");
+      ManualMessage();
+      TurnRightDegreesMessage();
       TurnRight(90);
       AddMovementValueIntoArray('a');
-      Serial1.println("Manual: Turning Right Completed, Press C To Move Forward");
+      ManualMessage();
+      TurningCompletedMessage();
+      PressToContinueMessage();
       Serial1.flush();
       break;
 
     case'i': case'c':
-      Serial1.println("Automated: Moving Forward");
+      AutomatedMessage();
+      MoveForwardMessage();
+      //Reset the encoder values since want to start fresh when we call the movementgoingforward in this switch
       ResetEncoderTotalValues();
       MovementGoingForward();
       Serial1.flush();
       break;
 
     case 'j':
-      Serial1.println("Automated: Turning Left 90 Degrees");
+      AutomatedMessage();
+      TurnLeftDegreesMessage();
       TurnLeft(90);
-      Serial1.println("Automated: Turning Left Completed");
+      AutomatedMessage();
+      TurningCompletedMessage();
       AddMovementValueIntoArray('d');
       delay(100);
-      Serial1.println("Automated: Moving Forward");
+      AutomatedMessage();
+      MoveForwardMessage();
       ResetEncoderTotalValues();
       MovementGoingForward();
       Serial1.flush();
       break;
 
     case 'l':
-      Serial1.println("Automated: Turning Right 90 Degrees");
+      AutomatedMessage();
+      TurnRightDegreesMessage();
       TurnRight(90);
-      Serial1.println("Automated: Turning Right Completed");
+      AutomatedMessage();
+      TurningCompletedMessage();
       AddMovementValueIntoArray('a');
       delay(100);
-      Serial1.println("Automated: Moving Forward");
+      AutomatedMessage();
+      MoveForwardMessage();
       ResetEncoderTotalValues();
       MovementGoingForward();
       Serial1.flush();
       break;
 
     case 'b':
-      Serial1.println("Automated: Turning Right 180 Degrees");
+    AutomatedMessage();
+    TurningHalfDegreesMessage();
       delay(200);
       TurnLeft(90);
       delay(200);
@@ -250,11 +275,12 @@ void loop() {
       AddEncoderValuesIntoArray();
       AddMovementValueIntoArray('b');
       SwitchCaseForReturningToJunction();
-      Serial1.println("Automated: We've past the T junction");
+      AutomatedMessage();
+      ArrivedTJunctionMessage();
       MotorSpeedStop();
       //Here we will check if(position is equal to x or z, if it isn't then have another if.
       // saying if position is equal to n then delete size 5, if it isn't then delete two. means it's not got a room.
-      
+
       if (!(movementArray[indexPositionMovement - 2] == 'z' || movementArray[indexPositionMovement - 2] == 'x'))
       {
         if (movementArray[indexPositionMovement - 2] == 'n')
@@ -318,7 +344,8 @@ void SwitchCaseForSearchingRoomInMovement()
     switch (incomingByte)
     {
       case't':
-        Serial1.println("Manual: Moving Forward");
+        AdjustMessage();
+        MoveForwardMessage();
         MotorSpeedForward();
         delay(10);
         MotorSpeedStop();
@@ -326,7 +353,8 @@ void SwitchCaseForSearchingRoomInMovement()
         break;
 
       case 'f':
-        Serial1.println("Adjust: Turning Left");
+        AdjustMessage();
+        TurnLeftMessage();
         MotorSpeedTurnLeft();
         delay(10);
         MotorSpeedStop();
@@ -335,7 +363,8 @@ void SwitchCaseForSearchingRoomInMovement()
         break;
 
       case 'y':
-        Serial1.println("Adjust: Turning Right");
+        AdjustMessage();
+        TurnRightMessage();
         MotorSpeedTurnRight();
         delay(10);
         MotorSpeedStop();
@@ -344,7 +373,8 @@ void SwitchCaseForSearchingRoomInMovement()
         break;
 
       case 'g':
-        Serial1.println("Adjust: Moving Backwards");
+        AdjustMessage();
+        MoveBackwardsMessage();
         MotorSpeedBackward();
         delay(10);
         MotorSpeedStop();
@@ -353,7 +383,8 @@ void SwitchCaseForSearchingRoomInMovement()
 
       case 'i':
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
-        Serial1.println("Automated: Moving Forward");
+        AutomatedMessage();
+        MoveForwardMessage();
         MovementGoingForward();
         Serial1.flush();
         turnOffLoop = true;
@@ -362,7 +393,8 @@ void SwitchCaseForSearchingRoomInMovement()
       case 'z':
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
-        Serial1.println("Automated: Searching Room On The Left");
+        AutomatedMessage();
+        SearchRoomMessage();
         AddMovementValueIntoArray('x');
         TurnLeftScanRoom();
         turnOffLoop = true;
@@ -372,7 +404,8 @@ void SwitchCaseForSearchingRoomInMovement()
       case 'x':
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
-        Serial1.println("Automated: Searching Room On The Right");
+        AutomatedMessage();
+        SearchRoomMessage();
         AddMovementValueIntoArray('z');
         TurnRightScanRoom();
         turnOffLoop = true;
@@ -381,7 +414,7 @@ void SwitchCaseForSearchingRoomInMovement()
 
       case 'e':
         MotorSpeedStop();
-        Serial1.println("Stopped");
+        MovementStoppedMessage();
         Serial1.flush();
         break;
     }
@@ -398,7 +431,8 @@ void SwitchCaseForReturningToJunction()
     switch (incomingByte)
     {
       case 'f':
-        Serial1.println("Adjust: Turning Left");
+        AdjustMessage();
+        TurnLeftMessage();
         MotorSpeedTurnLeft();
         delay(10);
         MotorSpeedStop();
@@ -407,7 +441,8 @@ void SwitchCaseForReturningToJunction()
         break;
 
       case 'y':
-        Serial1.println("Adjust: Turning Right");
+        AdjustMessage();
+        TurnRightMessage();
         MotorSpeedTurnRight();
         delay(10);
         MotorSpeedStop();
@@ -416,7 +451,8 @@ void SwitchCaseForReturningToJunction()
         break;
 
       case 'i':
-        Serial1.println("Automated: Moving Forward");
+        AutomatedMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistance();
         Serial1.flush();
         turnOffLoop = true;
@@ -435,58 +471,72 @@ void SwitchCaseForAutomaticBaseReturn()
     switch (nextMovement)
     {
       case 'a':
-        Serial1.println("Returning Home: Turning Left");
+        ReturningHomeMessage();
+        TurnLeftMessage();
         TurnLeft(90);
         indexPositionMovement--;
         indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
+        ReturningHomeMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'd':
-        Serial1.println("Returning Home: Turning Right");
+        ReturningHomeMessage();
+        TurnRightMessage();
         TurnRight(90);
         indexPositionMovement--;
         indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
+        ReturningHomeMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'z':
-        Serial1.println("Returning Home: Searching Left Room For Survivor");
+       ReturningHomeMessage();
+       SearchRoomMessage();
         TurnLeftScanRoom();
         indexPositionMovement--;
         indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
+        ReturningHomeMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'x':
-        Serial1.println("Returning Home: Searching Right Room For Survivor");
+        ReturningHomeMessage();
+       SearchRoomMessage();
         TurnRightScanRoom();
         indexPositionMovement--;
         indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
+        ReturningHomeMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'b':
-        Serial1.println("Returning Home: Moving Forward");
+        ReturningHomeMessage();
+        MoveForwardMessage();
         indexPositionDistance--;
         MovementForwardUsingDistanceAutomated();
+        
         indexPositionMovement--;
-        indexPositionDistance--;
-        Serial1.println("Returning Home: Turning 180");
+        indexPositionDistance--;        
+        ReturningHomeMessage();
+        TurningHalfDegreesMessage();
         TurnRight(90);
         TurnRight(90);
-        Serial1.println("Returning Home: Moving Forward");
+        
+        ReturningHomeMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistanceAutomated();
         break;
 
       case 'n':
         indexPositionMovement--;
         indexPositionDistance--;
-        Serial1.println("Returning Home: Moving Forward");
+        ReturningHomeMessage();
+        MoveForwardMessage();
         MovementForwardUsingDistanceAutomated();
 
     }
@@ -494,7 +544,8 @@ void SwitchCaseForAutomaticBaseReturn()
     if (indexPositionDistance == 0)
     {
       TurnOffLED();
-      Serial1.println("Returning Home: Zumo Has Returned To Home Base");
+      ReturningHomeMessage();
+      ReturnedBackToHomeBaseMessage();
       InitArrays();
       break;
     }
@@ -678,29 +729,29 @@ static void lineSensorCalibrateSetup()
     lineSensors.calibrate();
     turnSensorUpdate();
   }
- turnSensorReset();
-  
+  turnSensorReset();
+
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
   {
     lineSensors.calibrate();
     turnSensorUpdate();
   }
- turnSensorReset();
+  turnSensorReset();
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
   {
     lineSensors.calibrate();
     turnSensorUpdate();
   }
- turnSensorReset();
+  turnSensorReset();
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
   {
     lineSensors.calibrate();
     turnSensorUpdate();
   }
-  
+
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
   {
@@ -743,7 +794,7 @@ void MovementGoingForward()
     {
       delay(50);
       lineSensors.read(lineSensorValues);
-     
+
       if ((lineSensorValues[0] > QTR_THRESHOLD
            && lineSensorValues[1] > QTR_THRESHOLD)
           || (lineSensorValues[2] > QTR_THRESHOLD
@@ -827,31 +878,24 @@ void ScanRoom()
 void SearchRoomMessagesBeforeReturningHome(bool objectseen)
 {
   if (objectseen) {
-    Serial1.print("#Room ");
-    Serial1.print(AmountOfRooms);
-    Serial1.println(" Searched: Survivor Inside !");
+    SurvivorMessage(AmountOfRooms);
     AmountOfRooms++;
-    //AddBoolValueToArray(true, true);
-
   } else {
-    //Change it to n which stands for nothing, means we can skip searching a room in the automation
-    //- 1 since when it was added position would have been incremented.
+    //Change it to n which stands for nothing, means we can skip searching a room when we return home
+    //-1 since when it was added position would have been incremented.
     movementArray[indexPositionMovement - 1] = 'n';
-    Serial1.print("#Room ");
-    Serial1.print(AmountOfRooms);
-    Serial1.println("Searched: Room Empty !");
-   // AddBoolValueToArray(true, false);
+    RoomEmptyMessage(AmountOfRooms);
   }
 }
 
 void SearchRoomMeessagesReturningHome(bool objectseen)
 {
   if (objectseen) {
-    Serial1.println("Searched: Survivor Inside Sending Signal! ");
+    SendSignalMessage();
     PlayBuzzer();
     FlashLED();
   } else {
-    Serial1.println("Searched: Survivor Has Left The Room");
+    SurvivorLeftMessage();
   }
 }
 
@@ -896,8 +940,8 @@ void InitArrays()
 
   for (int i = 0; i < 20; i++)
   {
-   // RoomHasCivilian[i] = false;
-   // CorridorHasRoom[i] = false;
+    // RoomHasCivilian[i] = false;
+    // CorridorHasRoom[i] = false;
     rightDistanceEncoderArray[i] = 0;
     leftDistanceEncoderArray[i]  = 0;
     movementArray[i] = '#';
@@ -931,7 +975,7 @@ void MovementForwardUsingDistance()
     currentSpeedRight = MAIN_SPEED + correction;
     motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
     lineSensors.read(lineSensorValues);
-    
+
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
       motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
@@ -989,7 +1033,7 @@ void MovementForwardUsingDistanceAutomated()
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
       delay(50);
-     lineSensors.read(lineSensorValues);
+      lineSensors.read(lineSensorValues);
       printReadingsToSerial();
       if ((lineSensorValues[0] > QTR_THRESHOLD
            && lineSensorValues[1] > QTR_THRESHOLD)

@@ -1,43 +1,99 @@
-/* BuzzerAndLED.h and BuzzerAndLED.cpp contains the functions
-   that allow our buzzer to play a tune and allows us to have
-   turn on or off our LED lights on top of making them flash
+/* SerialMessages.h and SerialMessages.cpp is where we store
+    the messages for our code. I realised in my code that
+    the messages are repeated a lot so I condensed them down
+    to save memory. (Dynamic Memory is now down to 54%. it  
+    was originally 86%, definitly was a good choice doing this)
 
-   I was able to undertand how to use the LED lights by following 
-   the example BlinkLED for the Zumo32u4 and I looked at the class reference for 
-   the buzzer it is also where I got my tune from. 
-   https://pololu.github.io/zumo-32u4-arduino-library/class_zumo32_u4_buzzer.html#ab72bde97ceceef8705f1bbaeccb970db
+    Rememember and this is very important, Serial1 is what we
+    use to communicate to the XBEE and Serial is what we use to
+    communicate through the USB cable.
 */
 
 #include <Wire.h>
-#include "BuzzerAndLED.h"
+#include "SerialMessages.h"
 
-void PlayBuzzer()
+void ManualMessage() {
+  Serial1.println("Manual: ");
+}
+void AutomatedMessage()
 {
-    buzzer.play("!L16 V8 cdefgab>cbagfedc");
+  Serial1.println("Automated: ");
+}
+void ReturningHomeMessage() {
+  Serial1.println("Returning Home: ");
+}
+void AdjustMessage(){
+  Serial1.println("Adjust: ");
 }
 
-void TurnOffLED()
+void MoveForwardMessage()
 {
-  ledRed(0);
-  ledYellow(0);
-  ledGreen(0);
+  Serial1.print("Moving Forward");
 }
-void TurnOnLED()
+void MoveBackwardsMessage()
 {
-  ledRed(1);
-  ledYellow(1);
-  ledGreen(1);
+  Serial1.print("Moving Backwards");
 }
-void FlashLED()
+void TurnLeftMessage()
 {
-  TurnOffLED();
-  delay(FLASH_DURATION);
-  for (int i = 0; i < 10; i++)
-  {
-    TurnOnLED();
-    delay(FLASH_DURATION);
-    TurnOffLED();
-  }
-  delay(FLASH_DURATION);
-  TurnOnLED();
+  Serial1.print("Turning Left");
+}
+void TurnRightMessage() {
+  Serial1.print("Turning Right");
+}
+
+void TurnLeftDegreesMessage(){
+  Serial1.print("Turning Left 90 Degrees");
+}
+void TurnRightDegreesMessage()
+{
+  Serial1.print("Turning Right 90 Degrees");
+}
+
+void TurningCompletedMessage(){
+  Serial1.print("Turning Completed");
+}
+void PressToContinueMessage(){
+  Serial1.println("Press C Or Start Automation To Move Forward");
+}
+void TurningHalfDegreesMessage(){
+Serial1.print("Turning 180 Degrees");
+}
+void MovementStoppedMessage(){
+  Serial1.println("Movement Stopped");
+}
+
+void ArrivedTJunctionMessage(){
+  Serial1.print("We've Arrived At The T Junction");
+}
+
+void SearchRoomMessage(){
+  Serial1.print("Searching Room For Survivor");
+}
+
+void SurvivorMessage(int roomnumber)
+{
+  Serial1.print("#Room ");
+  Serial1.print(roomnumber);
+  Serial1.println(" Searched: Survivor Inside !");
+}
+
+void RoomEmptyMessage(int roomnumber)
+{
+  Serial1.print("#Room ");
+  Serial1.print(roomnumber);
+  Serial1.println(" Searched: Room Empty !");
+}
+
+void SendSignalMessage() {
+  Serial1.println("Searched: Survivor Inside Sending Signal! ");
+}
+
+void SurvivorLeftMessage() {
+  Serial1.println("Searched: Survivor Has Left The Room");
+}
+
+void ReturnedBackToHomeBaseMessage()
+{
+  Serial1.print("Zumo Has Returned To Home Base");
 }
