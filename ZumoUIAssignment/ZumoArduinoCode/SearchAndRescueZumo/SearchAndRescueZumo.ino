@@ -233,28 +233,23 @@ void loop() {
       delay(200);
       ResetEncoderTotalValues();
 
-      if (movementArray[indexPositionMovement - 2] == 'x' ||
-          movementArray[indexPositionMovement - 2] == 'z' ||
-          movementArray[indexPositionMovement - 2] == 'n')
+      if (movementArray[indexPositionMovement - 1] == 'x' ||
+          movementArray[indexPositionMovement - 1] == 'z' ||
+          movementArray[indexPositionMovement - 1] == 'n')
       {
-        totalDistanceValueRightEncoder += rightDistanceEncoderArray[indexPositionDistance - 1];
-        totalDistanceValueRightEncoder += rightDistanceEncoderArray[indexPositionDistance - 2];
-        totalDistanceValueLeftEncoder += leftDistanceEncoderArray[indexPositionDistance - 1];
-        totalDistanceValueLeftEncoder += leftDistanceEncoderArray[indexPositionDistance - 2];
-        Serial1.println("Adds all four if has room in corrdior");
+        AddEncoderValues(leftDistanceEncoderArray[indexPositionDistance - 1] , rightDistanceEncoderArray[indexPositionDistance - 1]);
+        AddEncoderValues(leftDistanceEncoderArray[indexPositionDistance - 2] , rightDistanceEncoderArray[indexPositionDistance - 2]);
       }
       else
       {
-        totalDistanceValueRightEncoder += rightDistanceEncoderArray[indexPositionDistance - 1];
-        totalDistanceValueLeftEncoder += leftDistanceEncoderArray[indexPositionDistance - 1];
-        Serial1.println("Adds only two if room in corrdior");
+        AddEncoderValues(leftDistanceEncoderArray[indexPositionDistance - 1] , rightDistanceEncoderArray[indexPositionDistance - 1]);
+        //This was used for testing but cant remove because if you do it throws a error on LEDlightsOn wtf?
         Serial1.println(totalDistanceValueRightEncoder);
         Serial1.println(totalDistanceValueLeftEncoder);
       }
       AddEncoderValuesIntoArray();
       AddMovementValueIntoArray('b');
-      Serial1.println("Automated: Moving Forward");
-      MovementForwardUsingDistance();
+      SwitchCaseForReturningToJunction();
       Serial1.println("Automated: We've past the T junction");
       MotorSpeedStop();
       //Here we will check if(position is equal to x or z, if it isn't then have another if.
@@ -393,6 +388,42 @@ void SwitchCaseForSearchingRoomInMovement()
   } while (turnOffLoop != true);
 }
 
+
+void SwitchCaseForReturningToJunction()
+{
+  bool turnOffLoop = false;
+  do {
+    incomingByte = Serial1.read();
+
+    switch (incomingByte)
+    {
+      case 'f':
+        Serial1.println("Adjust: Turning Left");
+        MotorSpeedTurnLeft();
+        delay(10);
+        MotorSpeedStop();
+        turnSensorReset();
+        Serial1.flush();
+        break;
+
+      case 'y':
+        Serial1.println("Adjust: Turning Right");
+        MotorSpeedTurnRight();
+        delay(10);
+        MotorSpeedStop();
+        turnSensorReset();
+        Serial1.flush();
+        break;
+
+      case 'i':
+        Serial1.println("Automated: Moving Forward");
+        MovementForwardUsingDistance();
+        Serial1.flush();
+        turnOffLoop = true;
+        break;
+    }
+  } while (turnOffLoop != true);
+}
 
 void SwitchCaseForAutomaticBaseReturn()
 {
@@ -647,6 +678,7 @@ static void lineSensorCalibrateSetup()
     lineSensors.calibrate();
     turnSensorUpdate();
   }
+ turnSensorReset();
   
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
@@ -654,14 +686,14 @@ static void lineSensorCalibrateSetup()
     lineSensors.calibrate();
     turnSensorUpdate();
   }
-
+ turnSensorReset();
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
   {
     lineSensors.calibrate();
     turnSensorUpdate();
   }
-
+ turnSensorReset();
   motors.setSpeeds(-FORWARD_SPEED, FORWARD_SPEED);
   while ((int32_t)turnAngle < turnAngle45 * 2)
   {
@@ -922,7 +954,6 @@ void MovementForwardUsingDistance()
         tempLeft += encoders.getCountsAndResetLeft();
         tempRight += encoders.getCountsAndResetRight();
       }
-
       countsLeft = encoders.getCountsLeft();
       countsRight = encoders.getCountsRight();
     }
