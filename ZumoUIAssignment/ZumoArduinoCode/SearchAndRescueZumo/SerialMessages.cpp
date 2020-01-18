@@ -13,62 +13,62 @@
 #include "SerialMessages.h"
 
 void ManualMessage() {
-  Serial1.println("Manual: ");
+  Serial1.print("Manual: ");
 }
 void AutomatedMessage()
 {
-  Serial1.println("Automated: ");
+  Serial1.print("Automated: ");
 }
 void ReturningHomeMessage() {
-  Serial1.println("Returning Home: ");
+  Serial1.print("Returning Home: ");
 }
 void AdjustMessage(){
-  Serial1.println("Adjust: ");
+  Serial1.print("Adjust: ");
 }
 
 void MoveForwardMessage()
 {
-  Serial1.print("Moving Forward");
+  Serial1.println("Moving Forward");
 }
 void MoveBackwardsMessage()
 {
-  Serial1.print("Moving Backwards");
+  Serial1.println("Moving Backwards");
 }
 void TurnLeftMessage()
 {
-  Serial1.print("Turning Left");
+  Serial1.println("Turning Left");
 }
 void TurnRightMessage() {
-  Serial1.print("Turning Right");
+  Serial1.println("Turning Right");
 }
 
 void TurnLeftDegreesMessage(){
-  Serial1.print("Turning Left 90 Degrees");
+  Serial1.println("Turning Left 90 Degrees");
 }
 void TurnRightDegreesMessage()
 {
-  Serial1.print("Turning Right 90 Degrees");
+  Serial1.println("Turning Right 90 Degrees");
 }
 
 void TurningCompletedMessage(){
-  Serial1.print("Turning Completed");
+  Serial1.println("Turning Completed");
 }
 void PressToContinueMessage(){
   Serial1.println("Press C Or Start Automation To Move Forward");
 }
 void TurningHalfDegreesMessage(){
-Serial1.print("Turning 180 Degrees");
+Serial1.println("Turning 180 Degrees");
 }
 void MovementStoppedMessage(){
   Serial1.println("Movement Stopped");
 }
 
 void ArrivedTJunctionMessage(){
-  Serial1.print("We've Arrived At The T Junction");
+  Serial1.println("We've Arrived At The T Junction");
 }
 
 void SearchRoomMessage(){
-  Serial1.print("Searching Room For Survivor");
+  Serial1.println("Searching Room For Survivor");
 }
 
 void SurvivorMessage(int roomnumber)
@@ -95,5 +95,5 @@ void SurvivorLeftMessage() {
 
 void ReturnedBackToHomeBaseMessage()
 {
-  Serial1.print("Zumo Has Returned To Home Base");
+  Serial1.println("Zumo Has Returned To Home Base");
 }

@@ -10,7 +10,7 @@ void ManualForwardSpeed()
   motors.setSpeeds(MANUAL_FORWARD_SPEED, MANUAL_FORWARD_SPEED);
 }
 void ManualReverseSpeed(){
-  motors.setSpeeds(MANUAL_REVERSE_SPEED, MANUAL_REVERSE_SPEED);
+  motors.setSpeeds(-MANUAL_REVERSE_SPEED, -MANUAL_REVERSE_SPEED);
 }
 void ManualTurnLeftSpeed(){
   motors.setSpeeds(-MANUAL_TURN_SPEED, MANUAL_TURN_SPEED);
@@ -23,7 +23,7 @@ void AutomatedForwardSpeed(){
   motors.setSpeeds(AUTO_FORWARD_SPEED, AUTO_FORWARD_SPEED);
 }
 void AutomatedReverseSpeed(){
-  motors.setSpeeds(AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED);
+  motors.setSpeeds(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED);
 }
 void AutomatedTurnLeftSpeed(){
    motors.setSpeeds(-AUTO_TURN_SPEED, AUTO_TURN_SPEED);
