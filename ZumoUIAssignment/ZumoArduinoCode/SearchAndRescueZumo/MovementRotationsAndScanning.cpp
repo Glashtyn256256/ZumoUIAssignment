@@ -7,6 +7,7 @@
  * This meant that if you went in a straght line it would start to curve 
  * into a wall and the rotations were unreliable. 
  * 
+ * Moving forward 
  * I orginally used just the motorspeeds and delays to go across the map
  * this worked but was insonsient and was prone to getting stuck on walls 
  * or being stuck in the corner of a corrdior. It was also not very accurate
@@ -32,6 +33,7 @@
  * this also to my rotations which works most the time. I believe the reason 
  * the rotations isn't always accurate is due to the gyro.
  * 
+ * Line Sensors
  * I also had to make sure the zumo would stop when it hits the wall
  * this was when we used the linesensors to detect if it was over a line
  * or not. Luckily I didnt have to much of a issue with this thanks to
@@ -42,6 +44,7 @@
  * get into positon. This allows us to know if we hit a wall straight or if we 
  * hit the wall at an angle.
  * 
+ *Rotations
  * Rotations are fairly straight forward we used the Gyro to workout what angle I
  * am at, I needed to make sure we updated the angle each loop so the gyro knows 
  * how much it has turned by. You then want to make sure you reset the gyro back to 
@@ -55,6 +58,7 @@
  * to the Gyro to compensate for the power difference in the motors that had improved the accuracy
  * by a small margin.
  * 
+ * Proximity Sensors
  * The proximity snesors was probably the most simplest to get working, this allows us to know if
  * there is a object that has been detected in a room. I had to play around with the Proximity Sensor
  * Threshold but I found 5 - 6 was the best. I used the SumoProximitySensors Zumo32u4 example to give 

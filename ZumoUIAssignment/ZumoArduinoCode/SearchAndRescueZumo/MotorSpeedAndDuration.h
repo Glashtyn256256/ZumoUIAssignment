@@ -67,7 +67,11 @@ void SpeedStop();
 */ 
 void SetSpeedValues(int leftspeed,int rightspeed);
 
-void SetSpeedValuesDurationAndStop(int leftvalue, int rightvalue, int duration);
+/*This function allows us to pass in a left motor speed, right motorspeed and a duration
+we want the speed to continue for. When the duration ends the motors speed will be set
+back to 0. This will be used when we hit a wall with the line sensors or adjusting the
+zumos position*/
+void SetSpeedValuesDurationAndStop(int leftspeed, int rightspeed, int duration);
 
 //Objects defined below must be in the sketch.
 

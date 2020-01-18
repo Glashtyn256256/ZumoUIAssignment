@@ -16,51 +16,55 @@ Zumo32U4LCD lcd;
 Zumo32U4Buzzer buzzer;
 L3G gyro;
 
+
+/*The number of line sensors and the data we store in the array*/
 #define NUM_SENSORS 3
-#define NUM_ENCODERS 4
 uint16_t lineSensorValues[NUM_SENSORS];
-uint16_t motorEncoderValues[NUM_ENCODERS];
+#define QTR_THRESHOLD     500  // microseconds
 
 //Used for the proximity sensors to scan the room.
 const uint16_t sensorProximityThreshold = 5;
 uint16_t leftValue;
 uint16_t rightValue;
 
-#define QTR_THRESHOLD     500  // microseconds
-#define ENCODER_TURN_LIMIT 658
-// These might need to be tuned for different motor types.
-#define REVERSE_SPEED     150  // 0 is stopped, 400 is full speed
-#define TURN_SPEED        200
-#define FORWARD_SPEED     150
+
+
 #define Kp 1
 #define STRAIGHTFACTOR 1.015  // Adjust this to correct for minor curve.  Should be in the 0.9 to 1.1 range
 #define DEGREES 90
+
+//TJUNCTION was originally used for how far we wanted to get past the T junction. Not needed now
 #define TJUNCTION 0
+
+//Store the left and right encoder values for each distance.
 int rightDistanceEncoderArray[20];
 int leftDistanceEncoderArray[20];
 int totalDistanceValueRightEncoder;
 int totalDistanceValueLeftEncoder;
 int indexPositionDistance;
 
-//bool RoomHasCivilian[20];
-//bool CorridorHasRoom[20];
-int indexPositionCorridorRooms;
-
+//Store any rotations, room searches or T junction movements into this array.
+//Both distance and movement array allow us to return home automatically.
 char movementArray[20];
-
 int indexPositionMovement;
 
-
+//Amount of rooms we've currently been in
 int AmountOfRooms;
+//Boolean to let certain functions know we are returning home
 bool ReturnHomeIsTrue;
 
+//All used for movement and roation.
 int error;
 int correction;
 int currentSpeedLeft;
 int currentSpeedRight;
 int countsLeft;
 int countsRight;
+int tempLeft;
+int tempRight;
 
+/*This is called on all movement functions such as rotating and moving forward
+this resets the encoders and sets the wheels to the correct speed.*/
 void SetEncodersAndSpeed(int leftspeed, int rightspeed)
 {
   error = 0;
@@ -72,17 +76,30 @@ void SetEncodersAndSpeed(int leftspeed, int rightspeed)
   encoders.getCountsAndResetRight();
   countsLeft =  encoders.getCountsLeft();
   countsRight = encoders.getCountsRight();
+  tempLeft = 0;
+  tempRight = 0;
+  SetSpeedValues(leftspeed, rightspeed);
 }
 
 void setup() {
-  // put your setup code here, to run once:
+  //Our Serials that we use to send or read data. Serial1 is over XBEE and Serial is over USB cable
   Serial1.begin(9600);
   Serial.begin(9600);
+  
+  //Resets our arrays and index positions.
   InitArrays();
+  
+  //Sets up the lines sensors and proximity sensors.
   lineSensors.initThreeSensors();
   proxSensors.initFrontSensor();
+  
+  //Calibrates the Gyro
   turnSensorSetup();
+  
+  //Calibrates the line sensors.
   lineSensorCalibrateSetup();
+
+  //Displays how much voltage we currently have in our batteries in the zumo.
   Serial1.print("Battery Power: ");
   Serial1.println(readBatteryMillivolts());
 
@@ -95,9 +112,13 @@ bool aboveLine(uint8_t sensorIndex)
 
 char incomingByte;
 void loop() {
-  // put your main code here, to run repeatedly:
+
   incomingByte = Serial1.read();
-  //reverse back out and then adjust the encoders to match each other, to keep it straight?
+
+  /*Main switch, I mean it's pretty obvious what each case does due to the naming of the variables
+  but in short this switch allows us to adjust our zumo position, move manually, automated movement, 
+  180 turn and return home automatically. This switch is called at the start and when we hit the end
+  of a corridor*/
   switch (incomingByte)
   {
     case'w':
@@ -129,42 +150,34 @@ void loop() {
       break;
 
     case't':
-      AdjustMessage();
-      MoveForwardMessage();
-      AdjustForwardSpeed();
-      delay(ADJUST_DURATION);
-      SpeedStop();
-      Serial1.flush();
-      break;
+        AdjustMessage();
+        MoveForwardMessage();
+        SetSpeedValuesDurationAndStop(ADJUST_FORWARD_SPEED, ADJUST_FORWARD_SPEED, ADJUST_DURATION);
+        Serial1.flush();
+        break;
 
-    case 'f':
-      AdjustMessage();
-      TurnLeftMessage();
-      AdjustTurnLeftSpeed();
-      delay(ADJUST_DURATION);
-      SpeedStop();
-      turnSensorReset();
-      Serial1.flush();
-      break;
+      case 'f':
+        AdjustMessage();
+        TurnLeftMessage();
+        SetSpeedValuesDurationAndStop(-ADJUST_TURN_SPEED, ADJUST_TURN_SPEED, ADJUST_DURATION);
+        turnSensorReset();
+        Serial1.flush();
+        break;
 
-    case 'y':
-      AdjustMessage();
-      TurnRightMessage();
-      AdjustTurnRightSpeed();
-      delay(ADJUST_DURATION);
-      SpeedStop();
-      turnSensorReset();
-      Serial1.flush();
-      break;
+      case 'y':
+        AdjustMessage();
+        TurnRightMessage();
+        SetSpeedValuesDurationAndStop(ADJUST_TURN_SPEED, -ADJUST_TURN_SPEED, ADJUST_DURATION);
+        turnSensorReset();
+        Serial1.flush();
+        break;
 
-    case 'g':
-      AdjustMessage();
-      MoveBackwardsMessage();
-      AdjustReverseSpeed();
-      delay(ADJUST_DURATION);
-      SpeedStop();
-      Serial1.flush();
-      break;
+      case 'g':
+        AdjustMessage();
+        MoveBackwardsMessage();
+        SetSpeedValuesDurationAndStop(-ADJUST_REVERSE_SPEED, -ADJUST_REVERSE_SPEED, ADJUST_DURATION);
+        Serial1.flush();
+        break;
 
     case 'e':
       SpeedStop();
@@ -210,6 +223,7 @@ void loop() {
       TurnLeft(90);
       AutomatedMessage();
       TurningCompletedMessage();
+      //Add the opposite turn into the array, since on the way back it will be opposite of what you inputted.
       AddMovementValueIntoArray('d');
       delay(100);
       AutomatedMessage();
@@ -225,6 +239,7 @@ void loop() {
       TurnRight(90);
       AutomatedMessage();
       TurningCompletedMessage();
+      //Add the opposite turn into the array, since on the way back it will be opposite of what you inputted.
       AddMovementValueIntoArray('a');
       delay(100);
       AutomatedMessage();
@@ -244,6 +259,10 @@ void loop() {
       delay(200);
       ResetEncoderTotalValues();
 
+      /*This checks to see if the corridor we are in has a room or doesn't have a room.
+      if it has a room then we need to add the two distances together, if it doesnt have
+      a room then we only want the whole distance !!!This will not work if a corridor has
+      two rooms and we press B, can only work with one room in a corridor!!!*/
       if (movementArray[indexPositionMovement - 1] == 'x' ||
           movementArray[indexPositionMovement - 1] == 'z' ||
           movementArray[indexPositionMovement - 1] == 'n')
@@ -258,13 +277,18 @@ void loop() {
       }
       AddEncoderValuesIntoArray();
       AddMovementValueIntoArray('b');
+      
+      //Allows us to adjust the zumo when it has done a 180 degree turn. Can only move forward and adjust.
       SwitchCaseForReturningToJunction();
+      
       AutomatedMessage();
       ArrivedTJunctionMessage();
       SpeedStop();
-      //Here we will check if(position is equal to x or z, if it isn't then have another if.
-      // saying if position is equal to n then delete size 5, if it isn't then delete two. means it's not got a room.
-
+      
+      /*This checks to see if the room we have searched is valid, if it is a z or x it means a survior was inside
+        and we want to come back to search the room. If it wasn't and it was a n or another value then we want to 
+        cut out this corridor for when we return home this optimizes the path. !!!This will not work if a corridor has
+      two rooms and there is a surivor at the end, since it only checks the first room.!!!*/
       if (!(movementArray[indexPositionMovement - 2] == 'z' || movementArray[indexPositionMovement - 2] == 'x'))
       {
         if (movementArray[indexPositionMovement - 2] == 'n')
@@ -306,8 +330,11 @@ void loop() {
       break;
 
     case 'h':
+      /*This is set to true so certain functions such as scan room can peform differently.*/
       ReturnHomeIsTrue = true;
-      //We decrement here to get the last position in array with our values.
+      
+      /*Remember we increment everytime we add onto the array so we need to decrement 
+       to get the last value added in the array.*/      
       indexPositionMovement--;
       indexPositionDistance--;
       TurnLeft(90);
@@ -317,6 +344,9 @@ void loop() {
   }
 }
 
+/*This switch is called only in our moveforward function, when you press e the zumo is stopped 
+  this function is called and this switch allows us either to adjust the position of the zumo, 
+  scan a room left or right or carry on moving forward.*/
 void SwitchCaseForSearchingRoomInMovement()
 {
   bool turnOffLoop = false;
@@ -325,21 +355,18 @@ void SwitchCaseForSearchingRoomInMovement()
 
     switch (incomingByte)
     {
+      //Allows us to adjust the position of the Zumo handy if the angle is a bit off.
       case't':
         AdjustMessage();
         MoveForwardMessage();
-        AdjustForwardSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(ADJUST_FORWARD_SPEED, ADJUST_FORWARD_SPEED, ADJUST_DURATION);
         Serial1.flush();
         break;
 
       case 'f':
         AdjustMessage();
         TurnLeftMessage();
-        AdjustTurnLeftSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-ADJUST_TURN_SPEED, ADJUST_TURN_SPEED, ADJUST_DURATION);
         turnSensorReset();
         Serial1.flush();
         break;
@@ -347,9 +374,7 @@ void SwitchCaseForSearchingRoomInMovement()
       case 'y':
         AdjustMessage();
         TurnRightMessage();
-        AdjustTurnRightSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(ADJUST_TURN_SPEED, -ADJUST_TURN_SPEED, ADJUST_DURATION);
         turnSensorReset();
         Serial1.flush();
         break;
@@ -357,16 +382,14 @@ void SwitchCaseForSearchingRoomInMovement()
       case 'g':
         AdjustMessage();
         MoveBackwardsMessage();
-        AdjustReverseSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-ADJUST_REVERSE_SPEED, -ADJUST_REVERSE_SPEED, ADJUST_DURATION);
         Serial1.flush();
         break;
 
       case 'i':
-        //We need to add the encoder values and store them and reset the encoders.
-        //This will get added onto the next movement, we only want to store in our array.
-        //If the room is being searched or we have hit a wall.
+        /*We need to add the encoder values, store them and reset the encoders.
+          If we move forward again, then we can add it back onto the stored values
+          giving us the total distance when we hit a wall*/
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AutomatedMessage();
         MoveForwardMessage();
@@ -376,22 +399,31 @@ void SwitchCaseForSearchingRoomInMovement()
         break;
 
       case 'z':
+      /*We want to know the distance of when we pressed Z on the encoders. This allows us to know
+        When we need to scan the room when we return home. So every corridor which has a room or more
+        should have two distances each room. e.g distance, room, distance, room, distance, hit end of corridor*/
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
+        AddMovementValueIntoArray('x');
+        
         AutomatedMessage();
         SearchRoomMessage();
-        AddMovementValueIntoArray('x');
+
         TurnLeftScanRoom();
         turnOffLoop = true;
         Serial1.flush();
         break;
 
       case 'x':
+      /*We want to know the distance of when we pressed X on the encoders. This allows us to know
+        When we need to scan the room when we return home. So every corridor which has a room or more
+        should have two distances each room. e.g distance, room, distance, room, distance, hit end of corridor*/
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
-        AutomatedMessage();
-        SearchRoomMessage();
         AddMovementValueIntoArray('z');
+        
+        AutomatedMessage();
+        SearchRoomMessage();      
         TurnRightScanRoom();
         turnOffLoop = true;
         Serial1.flush();
@@ -406,7 +438,9 @@ void SwitchCaseForSearchingRoomInMovement()
   } while (turnOffLoop != true);
 }
 
-
+/*This switch is called only when we press b, the reason for this usually the turning 180 isn't reliable enough and 
+it will be a little off. This allows us to adjust the position of the zumo and then move forward when we are happy 
+with the position. Asked Mark and he said it's fine so noice.*/
 void SwitchCaseForReturningToJunction()
 {
   bool turnOffLoop = false;
@@ -418,18 +452,14 @@ void SwitchCaseForReturningToJunction()
       case't':
         AdjustMessage();
         MoveForwardMessage();
-        AdjustForwardSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(ADJUST_FORWARD_SPEED, ADJUST_FORWARD_SPEED, ADJUST_DURATION);
         Serial1.flush();
         break;
 
       case 'f':
         AdjustMessage();
         TurnLeftMessage();
-        AdjustTurnLeftSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-ADJUST_TURN_SPEED, ADJUST_TURN_SPEED, ADJUST_DURATION);
         turnSensorReset();
         Serial1.flush();
         break;
@@ -437,9 +467,7 @@ void SwitchCaseForReturningToJunction()
       case 'y':
         AdjustMessage();
         TurnRightMessage();
-        AdjustTurnRightSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(ADJUST_TURN_SPEED, -ADJUST_TURN_SPEED, ADJUST_DURATION);
         turnSensorReset();
         Serial1.flush();
         break;
@@ -447,9 +475,7 @@ void SwitchCaseForReturningToJunction()
       case 'g':
         AdjustMessage();
         MoveBackwardsMessage();
-        AdjustReverseSpeed();
-        delay(ADJUST_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-ADJUST_REVERSE_SPEED, -ADJUST_REVERSE_SPEED, ADJUST_DURATION);
         Serial1.flush();
         break;
 
@@ -464,9 +490,20 @@ void SwitchCaseForReturningToJunction()
   } while (turnOffLoop != true);
 }
 
+/*This is very important this switch is called when we press H and want to return home
+We move forward first using the encoder value we receive from the distance array to start
+us off. It will then enter a while and then check the movement array to see what movement
+needs to be done. Example it's 'a' we rotate left, decrement both index positions for the
+distance and mvoement array and then Moveforward. This cycle will keep happening till we
+return home. 
+
+!!!Warning: If our arrays go forward, rotate and rotate again. this will break the
+returning home. It needs to go distance, movement, distance. Not distance, movement, movement, distance
+otherwise this won't work.*/
 void SwitchCaseForAutomaticBaseReturn()
 {
-  //Do the first movement, no need to put in w command.
+  //Do the first movement, this starts our zumo off with first distance.
+  //REMEMBER! We want to be going backwards in our arrays
   MovementForwardUsingDistanceAutomated();
   while (true)
   {
@@ -555,12 +592,12 @@ void SwitchCaseForAutomaticBaseReturn()
   }
 }
 
-
+/*Rotates right using the gyro to detect what angle we are at and the encoders
+to keep the motors speed even (since motors have different power)*/
 void TurnRight(int degrees)
 {
   turnSensorReset();
   SetEncodersAndSpeed(AUTO_TURN_SPEED, -AUTO_TURN_SPEED);
-  AutomatedTurnRightSpeed();
   int angle = 0;
   do {
     delay(1);
@@ -579,11 +616,12 @@ void TurnRight(int degrees)
   turnSensorReset();
 }
 
+/*Rotates left using the gyro to detect what angle we are at and the encoders
+to keep the motors speed even (since motors have different power)*/
 void TurnLeft(int degrees)
 {
   turnSensorReset();
   SetEncodersAndSpeed(-AUTO_TURN_SPEED, AUTO_TURN_SPEED);
-  AutomatedTurnLeftSpeed();
   int angle = 0;
   do {
     delay(1);
@@ -603,12 +641,14 @@ void TurnLeft(int degrees)
 }
 
 
-
+/*This is the same as turn left and right but scans to see if a object is in the room.
+  if it is then we return the bool, we make sure to pass in objectseen so we dont accidentally
+  overwrite the value if it's true. So if it's been scanned, it wont use the proximity sensors
+  anymore.*/
 bool ScanRoomProximityTurnLeftGyro(bool objectseen, int degrees)
 {
   turnSensorReset();
   SetEncodersAndSpeed(-AUTO_TURN_SPEED, AUTO_TURN_SPEED);
-  AutomatedTurnLeftSpeed();
   int angle = 0;
   do {
     delay(1);
@@ -633,11 +673,14 @@ bool ScanRoomProximityTurnLeftGyro(bool objectseen, int degrees)
   return objectseen;
 }
 
+/*This is the same as turn left and right but scans to see if a object is in the room.
+  if it is then we return the bool, we make sure to pass in objectseen so we dont accidentally
+  overwrite the value if it's true. So if it's been scanned, it wont use the proximity sensors
+  anymore.*/
 bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
 {
   turnSensorReset();
   SetEncodersAndSpeed(AUTO_TURN_SPEED, -AUTO_TURN_SPEED);
-  AutomatedTurnRightSpeed();
   int angle = 0;
   do {
     delay(1);
@@ -704,6 +747,7 @@ void ScanRoom()
   }
 }
 
+/*Message for if a survivor is in a room or isn't*/
 void SearchRoomMessagesBeforeReturningHome(bool objectseen)
 {
   if (objectseen) {
@@ -717,6 +761,9 @@ void SearchRoomMessagesBeforeReturningHome(bool objectseen)
   }
 }
 
+/*Checks to see if a survior is still in the room, if it is it will play a buzzer and flash LED lights
+the lights will stay on and are turned off when we return home. It also lets us know if a survivor has
+left the room*/
 void SearchRoomMeessagesReturningHome(bool objectseen)
 {
   if (objectseen) {
@@ -728,11 +775,17 @@ void SearchRoomMeessagesReturningHome(bool objectseen)
   }
 }
 
+void AddEncodersToTempLeftAndTempRight(int tleft, int tright){
+  tempLeft = tleft;
+  tempRight = tright;
+}
+
 void AddEncoderValues( int leftencodervalue, int rightencodervalue)
 {
   totalDistanceValueRightEncoder += leftencodervalue;
   totalDistanceValueLeftEncoder += rightencodervalue;
 }
+
 void ResetEncoderTotalValues()
 {
   totalDistanceValueRightEncoder = 0;
@@ -768,11 +821,17 @@ void InitArrays()
   }
 }
 
+/*This allows us to move forward using the encoders to keep us in a straight line and the linesensors
+to detect if we have hit a wall. If our left or right sensor has hit a wall then we delay for 60 ms and
+read the values again to see if the middle sensor is over the line. If it is then we chuck the distance
+value into the array. If it hasn't it means we've hit a wall at a angle. We then reverse and then turn for 
+a certain amount of item which usually corrects the position of the zumo. We also can Press 'e' to stop this
+takes us to a swtich that allows us to adjust the postition, scan a room or move forward again.*/
 void MovementGoingForward()
 {
   turnSensorReset();
   SetEncodersAndSpeed(AUTO_FORWARD_SPEED, AUTO_FORWARD_SPEED);
-  AutomatedForwardSpeed();
+
   while (true)
   {
     delay(2);
@@ -802,12 +861,10 @@ void MovementGoingForward()
           || (lineSensorValues[2] > QTR_THRESHOLD
               && lineSensorValues[1] > QTR_THRESHOLD))
       {
-        AutomatedReverseSpeed();
-        delay(200);
-        SpeedStop();
+        //Maye need to change the duration to 200.
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
-        indexPositionCorridorRooms++;
         break;
       }
       else
@@ -830,14 +887,15 @@ void MovementGoingForward()
   }
 }
 
-
+/*This forward movement function is slightly different to the other one this is for when we have pressed 'b'
+since we are not allowed to do anything else till we have either past the room. This will break out of the while
+loop when it has arrived at the T junction. It has line sensors to check if it's hit a wall at a angle and will
+recorrect itself.*/
 void MovementForwardUsingDistance()
 {
   turnSensorReset();
   SetEncodersAndSpeed(AUTO_FORWARD_SPEED, AUTO_FORWARD_SPEED);
-  AutomatedForwardSpeed();
-  int tempLeft = 0;
-  int tempRight = 0;
+
   while (countsLeft + tempLeft < totalDistanceValueLeftEncoder + TJUNCTION && countsRight + tempRight < totalDistanceValueRightEncoder + TJUNCTION)
   {
     delay(2);
@@ -856,14 +914,12 @@ void MovementForwardUsingDistance()
       if (lineSensorValues[2] > QTR_THRESHOLD)
       {
         SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
-        tempLeft += encoders.getCountsAndResetLeft();
-        tempRight += encoders.getCountsAndResetRight();
+        AddEncodersToTempLeftAndTempRight(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
       }
       else
       {
         SetSpeedValuesDurationAndStop(AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, TURN_DURATION);
-        tempLeft += encoders.getCountsAndResetLeft();
-        tempRight += encoders.getCountsAndResetRight();
+        AddEncodersToTempLeftAndTempRight(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
       }
       countsLeft = encoders.getCountsLeft();
       countsRight = encoders.getCountsRight();
@@ -871,13 +927,16 @@ void MovementForwardUsingDistance()
   }
 }
 
+
+/*Same again very similiar to the other distance mvoements however this is called when we return home
+it uses the distances in the distance array to break out of the while loop. It uses sensors to check if 
+it has hit a wall, if it has then if it's hit the wall with the middle sensor it will stop and break the while,
+if it hasn't then its hit a wall at a angle and will correct it's position.*/
 void MovementForwardUsingDistanceAutomated()
 {
   turnSensorReset();
   SetEncodersAndSpeed(AUTO_FORWARD_SPEED, AUTO_FORWARD_SPEED);
-  AutomatedForwardSpeed();
-  int tempLeft = 0;
-  int tempRight = 0;
+
   while (countsLeft + tempLeft < leftDistanceEncoderArray[indexPositionDistance] && countsRight + tempRight < rightDistanceEncoderArray[indexPositionDistance])
   {
     delay(2);
@@ -908,14 +967,12 @@ void MovementForwardUsingDistanceAutomated()
         if (lineSensorValues[2] > QTR_THRESHOLD)
         {
           SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
-          tempLeft += encoders.getCountsAndResetLeft();
-          tempRight += encoders.getCountsAndResetRight();
+          AddEncodersToTempLeftAndTempRight(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight()); 
         }
         else
         {
           SetSpeedValuesDurationAndStop(AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, TURN_DURATION);
-          tempLeft += encoders.getCountsAndResetLeft();
-          tempRight += encoders.getCountsAndResetRight();
+          AddEncodersToTempLeftAndTempRight(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         }
         countsLeft = encoders.getCountsLeft();
         countsRight = encoders.getCountsRight();
@@ -925,7 +982,7 @@ void MovementForwardUsingDistanceAutomated()
   }
 }
 
-//Calibrate the line sensors for more accurate readings and precision.
+//Calibrate the line sensors for more accurate readings and precision, rotate 360 to get all the angles.
 static void lineSensorCalibrateSetup()
 {
   lcd.clear();
@@ -948,287 +1005,29 @@ static void lineSensorCalibrateSetup()
   }
   turnSensorReset();
 
-  AutomatedTurnLeftSpeed();
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  
-  turnSensorReset();
-  AutomatedTurnLeftSpeed();
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
-  
-  turnSensorReset();
-  AutomatedTurnLeftSpeed();
-  while ((int32_t)turnAngle < turnAngle45 * 2)
-  {
-    lineSensors.calibrate();
-    turnSensorUpdate();
-  }
 
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+  
+  turnSensorReset();
+
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+  
+  turnSensorReset();
+
+  while ((int32_t)turnAngle < turnAngle45 * 2)
+  {
+    lineSensors.calibrate();
+    turnSensorUpdate();
+  }
+  
   turnSensorReset();
   SpeedStop();
 }
-
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//void printReadingsToSerial()
-//{
-//  char buffer[80];
-//  sprintf(buffer, "%4d %4d %4d %c\n",
-//          lineSensorValues[0],
-//          lineSensorValues[1],
-//          lineSensorValues[2]
-//         );
-//  Serial.print(buffer);
-//}
-
-//void printReadingsToSerials()
-//{
-//  char buffer[80];
-//  sprintf(buffer, "%1d %1d %c\n",
-//          leftValue, rightValue
-//         );
-//  Serial1.print(buffer);
-//}
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//void TurnLeftUsingEncoders()
-//{
-//  MotorSpeedTurnLeft();
-//  int error;
-//  int correction;
-//  int currentSpeedLeft = TURN_SPEED;
-//  int currentSpeedRight = TURN_SPEED;
-//
-//  encoders.getCountsAndResetLeft();
-//  encoders.getCountsAndResetRight();
-//  int countsLeft =  encoders.getCountsLeft();
-//  int countsRight = encoders.getCountsRight();
-//
-//  while ((countsLeft < ENCODER_TURN_LIMIT) && (countsRight < ENCODER_TURN_LIMIT))
-//  {
-//
-//    countsLeft = -encoders.getCountsLeft();
-//    countsRight = encoders.getCountsRight();
-//    error = countsLeft - STRAIGHTFACTOR * countsRight;
-//    correction = Kp * error;
-//    currentSpeedRight = TURN_SPEED + correction;
-//    motors.setRightSpeed(currentSpeedRight);
-//  }
-//        if ((countsLeft < ENCODER_TURN_LIMIT))
-//        {
-//          while ((countsLeft < ENCODER_TURN_LIMIT))
-//          {
-//            countsLeft = -encoders.getCountsLeft();
-//            countsRight = encoders.getCountsRight();
-//            motors.setRightSpeed(-100);
-//
-//          }
-//        }
-//        else if (countsRight < ENCODER_TURN_LIMIT)
-//        {
-//          while ((countsRight < ENCODER_TURN_LIMIT))
-//          {
-//            countsLeft = -encoders.getCountsLeft();
-//            countsRight = encoders.getCountsRight();
-//            motors.setLeftSpeed(100);
-//
-//          }
-//        }
-//  motors.setLeftSpeed(0);
-//  motors.setRightSpeed(0);
-//  //reset encoders, we only want the encoders for when it's going straight.
-//  Serial1.println(encoders.getCountsAndResetLeft());
-//  Serial1.println(encoders.getCountsAndResetRight());
-//  turnSensorReset();
-//}
-
-//void TurnRightUsingEncoders()
-//{
-//  MotorSpeedTurnRight();
-//  int error;
-//  int correction;
-//  int currentSpeedLeft = TURN_SPEED;
-//  int currentSpeedRight = TURN_SPEED;
-//
-//  encoders.getCountsAndResetLeft();
-//  encoders.getCountsAndResetRight();
-//  int countsLeft =  encoders.getCountsLeft();
-//  int countsRight = encoders.getCountsRight();
-//  while ((countsRight < ENCODER_TURN_LIMIT) && (countsLeft < ENCODER_TURN_LIMIT))
-//  {
-//    countsLeft = encoders.getCountsLeft();
-//    countsRight = -encoders.getCountsRight();
-//    error = countsRight - STRAIGHTFACTOR * countsLeft;
-//    correction = Kp * error;
-//    currentSpeedLeft = TURN_SPEED + correction;
-//    motors.setLeftSpeed(currentSpeedLeft);
-//  }
-//   if (countsRight < ENCODER_TURN_LIMIT)
-//  {
-//    while ((countsRight < ENCODER_TURN_LIMIT))
-//    {
-//      countsLeft = encoders.getCountsLeft();
-//      countsRight = -encoders.getCountsRight();
-//      motors.setLeftSpeed(-100);
-//
-//    }
-//  }
-//  else if ((countsLeft < ENCODER_TURN_LIMIT))
-//  {
-//    while ((countsLeft < ENCODER_TURN_LIMIT))
-//    {
-//      countsLeft = encoders.getCountsLeft();
-//      countsRight = -encoders.getCountsRight();
-//      motors.setRightSpeed(100);
-//
-//    }
-//  }
-//  motors.setLeftSpeed(0);
-//  motors.setRightSpeed(0);
-//  //reset encoders, we only want the encoders for when it's going straight.
-//  //Serial1.println(encoders.getCountsAndResetLeft());
-//  encoders.getCountsAndResetLeft();
-//  encoders.getCountsAndResetRight();
-//  //Serial1.println(encoders.getCountsAndResetRight());
-//  turnSensorReset();
-//}
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-/***
-    Was used for when I wanted to search a room, I would set the amount I want
-    the encoders to get to, by passing in the number through the parameter. Since
-    the room is small enough that I can scan without havint to move into and got
-    confirmation I didn't have to have it. I removed it, however if the room was
-    bigger then I would need to use this.
-***/
-//void MovementForwardUsingDistance(int distance)
-//{
-//  turnSensorReset();
-//  int error;
-//  int correction;
-//  int currentSpeedLeft = MAIN_SPEED;
-//  int currentSpeedRight = MAIN_SPEED;
-//  encoders.getCountsAndResetLeft();
-//  encoders.getCountsAndResetRight();
-//  int countsLeft =  encoders.getCountsLeft();
-//  int countsRight = encoders.getCountsRight();
-//
-//  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-//  while (countsLeft < distance && countsRight < distance)
-//  {
-//    delay(2);
-//    countsLeft = encoders.getCountsLeft();
-//    countsRight = encoders.getCountsRight();
-//    error = countsLeft - STRAIGHTFACTOR * countsRight;
-//    correction = Kp * error;
-//    currentSpeedRight = MAIN_SPEED + correction;
-//    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
-//lineSensors.read(lineSensorValues);
-//printReadingsToSerial();
-//    if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
-//    {
-//      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-//      delay(REVERSE_DURATION);
-//      MotorSpeedStop();
-//
-//      if (lineSensorValues[2] > QTR_THRESHOLD)
-//      {
-//        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-//        delay(TURN_DURATION);
-//        MotorSpeedStop();
-//      }
-//      else
-//      {
-//        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-//        delay(TURN_DURATION);
-//        MotorSpeedStop();
-//      }
-//    }
-//    printReadingsToSerial();
-//  }
-//}
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//bool ScanRoomProximityTurnRightEncoder(bool objectseen)
-//{
-//  MotorSpeedTurnRight();
-//  turnSensorReset();
-//  int error;
-//  int correction;
-//  int currentSpeedLeft = TURN_SPEED;
-//  int currentSpeedRight = TURN_SPEED;
-//
-//  encoders.getCountsAndResetLeft();
-//  encoders.getCountsAndResetRight();
-//  int countsLeft =  encoders.getCountsLeft();
-//  int countsRight = encoders.getCountsRight();
-//  do {
-//    delay(1);
-//    turnSensorUpdate();
-//    countsLeft =  encoders.getCountsLeft();
-//    countsRight = -encoders.getCountsRight();
-//    error = countsLeft - STRAIGHTFACTOR * countsRight;
-//    correction = Kp * error;
-//    currentSpeedRight = TURN_SPEED + correction;
-//    motors.setRightSpeed(currentSpeedRight);
-//
-//    if (objectseen == false)
-//    {
-//      proxSensors.read();
-//      leftValue = proxSensors.countsFrontWithLeftLeds();
-//      rightValue = proxSensors.countsFrontWithRightLeds();
-//      // printReadingsToSerials();
-//      objectseen = leftValue >= sensorProximityThreshold || rightValue >= sensorProximityThreshold;
-//    }
-//
-//  } while ((countsRight < ENCODER_TURN_LIMIT) && (countsLeft < ENCODER_TURN_LIMIT));
-//  MotorSpeedStop();
-//  turnSensorReset();
-//  return objectseen;
-//}
-
-//bool ScanRoomProximityTurnLeftEncoder(bool objectseen)
-//{
-//  MotorSpeedTurnLeft();
-//  turnSensorReset();
-//  int error;
-//  int correction;
-//  int currentSpeedLeft = TURN_SPEED;
-//  int currentSpeedRight = TURN_SPEED;
-//
-//  encoders.getCountsAndResetLeft();
-//  encoders.getCountsAndResetRight();
-//  int countsLeft =  encoders.getCountsLeft();
-//  int countsRight = encoders.getCountsRight();
-//  do {
-//    delay(1);
-//    turnSensorUpdate();
-//    countsLeft = -encoders.getCountsLeft();
-//    countsRight = encoders.getCountsRight();
-//    error = countsLeft - STRAIGHTFACTOR * countsRight;
-//    correction = Kp * error;
-//    currentSpeedRight = TURN_SPEED + correction;
-//    motors.setRightSpeed(currentSpeedRight);
-//
-//    if (objectseen == false)
-//    {
-//      proxSensors.read();
-//      leftValue = proxSensors.countsFrontWithLeftLeds();
-//      rightValue = proxSensors.countsFrontWithRightLeds();
-//      // printReadingsToSerials();
-//      objectseen = leftValue >= sensorProximityThreshold || rightValue >= sensorProximityThreshold;
-//    }
-//  } while ((countsLeft < ENCODER_TURN_LIMIT) && (countsRight < ENCODER_TURN_LIMIT));
-//  MotorSpeedStop();
-//  turnSensorReset();
-//  return objectseen;
-//}
