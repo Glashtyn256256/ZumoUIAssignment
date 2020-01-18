@@ -20,7 +20,6 @@ L3G gyro;
 #define NUM_ENCODERS 4
 uint16_t lineSensorValues[NUM_SENSORS];
 uint16_t motorEncoderValues[NUM_ENCODERS];
-const uint16_t sensorThreshold = 200;
 
 //Used for the proximity sensors to scan the room.
 const uint16_t sensorProximityThreshold = 5;
@@ -33,9 +32,6 @@ uint16_t rightValue;
 #define REVERSE_SPEED     150  // 0 is stopped, 400 is full speed
 #define TURN_SPEED        200
 #define FORWARD_SPEED     150
-#define REVERSE_DURATION  250  // ms
-#define TURN_DURATION     60  // ms
-#define MAIN_SPEED 150
 #define Kp 1
 #define STRAIGHTFACTOR 1.015  // Adjust this to correct for minor curve.  Should be in the 0.9 to 1.1 range
 #define DEGREES 90
@@ -94,7 +90,7 @@ void setup() {
 
 bool aboveLine(uint8_t sensorIndex)
 {
-  return lineSensorValues[sensorIndex] > sensorThreshold;
+  return lineSensorValues[sensorIndex] > QTR_THRESHOLD;
 }
 
 char incomingByte;
@@ -766,8 +762,6 @@ void InitArrays()
 
   for (int i = 0; i < 20; i++)
   {
-    // RoomHasCivilian[i] = false;
-    // CorridorHasRoom[i] = false;
     rightDistanceEncoderArray[i] = 0;
     leftDistanceEncoderArray[i]  = 0;
     movementArray[i] = '#';
@@ -818,22 +812,16 @@ void MovementGoingForward()
       }
       else
       {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(REVERSE_DURATION);
-        SpeedStop();
+       SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
         if (lineSensorValues[2] > QTR_THRESHOLD)
         {
-          motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-          delay(TURN_DURATION);
-          SpeedStop();
+          SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
           AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
           delay(100);
         }
         else
         {
-          motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-          delay(TURN_DURATION);
-          SpeedStop();
+          SetSpeedValuesDurationAndStop(AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, TURN_DURATION);
           AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
           delay(100);
         }
@@ -846,20 +834,10 @@ void MovementGoingForward()
 void MovementForwardUsingDistance()
 {
   turnSensorReset();
-  int error;
-  int correction;
-  int currentSpeedLeft = MAIN_SPEED;
-  int currentSpeedRight = MAIN_SPEED;
+  SetEncodersAndSpeed(AUTO_FORWARD_SPEED, AUTO_FORWARD_SPEED);
+  AutomatedForwardSpeed();
   int tempLeft = 0;
-  int tempRight  = 0;
-
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-  //Serial1.println(totalDistanceValueLeftEncoder);
-  //Serial1.println(totalDistanceValueRightEncoder);
+  int tempRight = 0;
   while (countsLeft + tempLeft < totalDistanceValueLeftEncoder + TJUNCTION && countsRight + tempRight < totalDistanceValueRightEncoder + TJUNCTION)
   {
     delay(2);
@@ -867,29 +845,23 @@ void MovementForwardUsingDistance()
     countsRight = encoders.getCountsRight();
     error = countsLeft - STRAIGHTFACTOR * countsRight;
     correction = Kp * error;
-    currentSpeedRight = MAIN_SPEED + correction;
+    currentSpeedRight = AUTO_FORWARD_SPEED + correction;
     motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
     lineSensors.read(lineSensorValues);
 
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
-      motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-      delay(REVERSE_DURATION);
-      SpeedStop();
+      SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
 
       if (lineSensorValues[2] > QTR_THRESHOLD)
       {
-        motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-        delay(TURN_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
         tempLeft += encoders.getCountsAndResetLeft();
         tempRight += encoders.getCountsAndResetRight();
       }
       else
       {
-        motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-        delay(TURN_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, TURN_DURATION);
         tempLeft += encoders.getCountsAndResetLeft();
         tempRight += encoders.getCountsAndResetRight();
       }
@@ -902,19 +874,10 @@ void MovementForwardUsingDistance()
 void MovementForwardUsingDistanceAutomated()
 {
   turnSensorReset();
-  int error = 0;
-  int correction = 0;
-  int currentSpeedLeft = MAIN_SPEED;
-  int currentSpeedRight = MAIN_SPEED;
+  SetEncodersAndSpeed(AUTO_FORWARD_SPEED, AUTO_FORWARD_SPEED);
+  AutomatedForwardSpeed();
   int tempLeft = 0;
-  int tempRight  = 0;
-
-  encoders.getCountsAndResetLeft();
-  encoders.getCountsAndResetRight();
-  int countsLeft =  encoders.getCountsLeft();
-  int countsRight = encoders.getCountsRight();
-  motors.setSpeeds(MAIN_SPEED, MAIN_SPEED);
-
+  int tempRight = 0;
   while (countsLeft + tempLeft < leftDistanceEncoderArray[indexPositionDistance] && countsRight + tempRight < rightDistanceEncoderArray[indexPositionDistance])
   {
     delay(2);
@@ -922,7 +885,7 @@ void MovementForwardUsingDistanceAutomated()
     countsRight = encoders.getCountsRight();
     error = countsLeft - STRAIGHTFACTOR * countsRight;
     correction = Kp * error;
-    currentSpeedRight = MAIN_SPEED + correction;
+    currentSpeedRight = AUTO_FORWARD_SPEED + correction;
     motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
@@ -935,30 +898,22 @@ void MovementForwardUsingDistanceAutomated()
           || (lineSensorValues[2] > QTR_THRESHOLD
               && lineSensorValues[1] > QTR_THRESHOLD))
       {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(REVERSE_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
         break;
       }
       else
       {
-        motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-        delay(REVERSE_DURATION);
-        SpeedStop();
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
 
         if (lineSensorValues[2] > QTR_THRESHOLD)
         {
-          motors.setSpeeds(-REVERSE_SPEED, REVERSE_SPEED);
-          delay(TURN_DURATION);
-          SpeedStop();
+          SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
           tempLeft += encoders.getCountsAndResetLeft();
           tempRight += encoders.getCountsAndResetRight();
         }
         else
         {
-          motors.setSpeeds(REVERSE_SPEED, -REVERSE_SPEED);
-          delay(TURN_DURATION);
-          SpeedStop();
+          SetSpeedValuesDurationAndStop(AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, TURN_DURATION);
           tempLeft += encoders.getCountsAndResetLeft();
           tempRight += encoders.getCountsAndResetRight();
         }

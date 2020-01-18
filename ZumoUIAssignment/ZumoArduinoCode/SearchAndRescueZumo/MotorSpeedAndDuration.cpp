@@ -52,3 +52,9 @@ void SpeedStop(){
 void SetSpeedValues(int leftvalue, int rightvalue){
    motors.setSpeeds(leftvalue, rightvalue);
 }
+
+void SetSpeedValuesDurationAndStop(int leftvalue, int rightvalue, int duration){
+  motors.setSpeeds(leftvalue, rightvalue);
+  delay(duration);
+  SpeedStop();
+}

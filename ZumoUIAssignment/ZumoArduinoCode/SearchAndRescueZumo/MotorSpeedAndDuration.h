@@ -62,10 +62,12 @@ void AdjustTurnRightSpeed();
 void SpeedStop();
 
 /*Set the speeds from the two values that are passed through. 
-  This will be used when we work out the correction that's need
+  This will be used when we work out the correction that's needed
   for the motors
 */ 
 void SetSpeedValues(int leftspeed,int rightspeed);
+
+void SetSpeedValuesDurationAndStop(int leftvalue, int rightvalue, int duration);
 
 //Objects defined below must be in the sketch.
 
