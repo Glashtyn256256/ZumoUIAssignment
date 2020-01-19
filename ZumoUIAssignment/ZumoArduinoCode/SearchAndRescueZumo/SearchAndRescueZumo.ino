@@ -726,6 +726,7 @@ void TurnRightScanRoom()
   // MovementGoingForward();
 }
 
+/*We call this to scan a room, if a object is found form the scan it will return true. False if nothing was found*/
 void ScanRoom()
 {
   bool objectSeen = false;
@@ -849,7 +850,7 @@ void MovementGoingForward()
     correction = Kp * error;
     currentSpeedRight = AUTO_FORWARD_SPEED + correction;
     SetSpeedValues(currentSpeedLeft, currentSpeedRight);
-
+    
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
@@ -904,7 +905,7 @@ void MovementForwardUsingDistance()
     error = countsLeft - STRAIGHTFACTOR * countsRight;
     correction = Kp * error;
     currentSpeedRight = AUTO_FORWARD_SPEED + correction;
-    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
+    SetSpeedValues(currentSpeedLeft, currentSpeedRight);
     lineSensors.read(lineSensorValues);
 
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
@@ -945,7 +946,8 @@ void MovementForwardUsingDistanceAutomated()
     error = countsLeft - STRAIGHTFACTOR * countsRight;
     correction = Kp * error;
     currentSpeedRight = AUTO_FORWARD_SPEED + correction;
-    motors.setSpeeds(currentSpeedLeft, currentSpeedRight);
+    SetSpeedValues(currentSpeedLeft, currentSpeedRight);
+    
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
