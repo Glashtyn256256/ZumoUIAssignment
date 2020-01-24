@@ -23,8 +23,8 @@ and provides functions that set the motorspeeds.*/
 #define MANUAL_TURN_SPEED 100
 
 #define AUTO_FORWARD_SPEED 150
-#define AUTO_REVERSE_SPEED 150
-#define AUTO_TURN_SPEED    200
+#define AUTO_REVERSE_SPEED 100
+#define AUTO_TURN_SPEED    120
 
 #define ADJUST_FORWARD_SPEED 200
 #define ADJUST_REVERSE_SPEED 200
