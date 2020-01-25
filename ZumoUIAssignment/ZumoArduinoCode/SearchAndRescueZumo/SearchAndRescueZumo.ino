@@ -758,6 +758,7 @@ void SearchRoomMessagesBeforeReturningHome(bool objectseen)
     //Change it to n which stands for nothing, means we can skip searching a room when we return home
     //-1 since when it was added position would have been incremented.
     movementArray[indexPositionMovement - 1] = 'n';
+    AmountOfRooms++;
     RoomEmptyMessage(AmountOfRooms);
   }
 }
