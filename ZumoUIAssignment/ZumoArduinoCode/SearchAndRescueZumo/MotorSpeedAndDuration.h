@@ -34,6 +34,7 @@ and provides functions that set the motorspeeds.*/
 
 //How long I want the delay to be when the Zumo has ran into the wall.
 #define REVERSE_DURATION  250  // ms
+#define REVERSE_DURATION_WALL 300
 
 //How long I want the zumo to turn when it needs to correct it's position after it has hit a wall.
 #define TURN_DURATION     60  // ms

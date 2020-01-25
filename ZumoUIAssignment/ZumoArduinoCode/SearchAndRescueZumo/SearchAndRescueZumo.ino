@@ -64,7 +64,7 @@ int tempLeft;
 int tempRight;
 
 /*This is called on all movement functions such as rotating and moving forward
-this resets the encoders and sets the wheels to the correct speed.*/
+  this resets the encoders and sets the wheels to the correct speed.*/
 void SetEncodersAndSpeed(int leftspeed, int rightspeed)
 {
   error = 0;
@@ -85,17 +85,17 @@ void setup() {
   //Our Serials that we use to send or read data. Serial1 is over XBEE and Serial is over USB cable
   Serial1.begin(9600);
   Serial.begin(9600);
-  
+
   //Resets our arrays and index positions.
   InitArrays();
-  
+
   //Sets up the lines sensors and proximity sensors.
   lineSensors.initThreeSensors();
   proxSensors.initFrontSensor();
-  
+
   //Calibrates the Gyro
   turnSensorSetup();
-  
+
   //Calibrates the line sensors.
   lineSensorCalibrateSetup();
 
@@ -116,9 +116,9 @@ void loop() {
   incomingByte = Serial1.read();
 
   /*Main switch, I mean it's pretty obvious what each case does due to the naming of the variables
-  but in short this switch allows us to adjust our zumo position, move manually, automated movement, 
-  180 turn and return home automatically. This switch is called at the start and when we hit the end
-  of a corridor*/
+    but in short this switch allows us to adjust our zumo position, move manually, automated movement,
+    180 turn and return home automatically. This switch is called at the start and when we hit the end
+    of a corridor*/
   switch (incomingByte)
   {
     case'w':
@@ -150,34 +150,34 @@ void loop() {
       break;
 
     case't':
-        AdjustMessage();
-        MoveForwardMessage();
-        SetSpeedValuesDurationAndStop(ADJUST_FORWARD_SPEED, ADJUST_FORWARD_SPEED, ADJUST_DURATION);
-        Serial1.flush();
-        break;
+      AdjustMessage();
+      MoveForwardMessage();
+      SetSpeedValuesDurationAndStop(ADJUST_FORWARD_SPEED, ADJUST_FORWARD_SPEED, ADJUST_DURATION);
+      Serial1.flush();
+      break;
 
-      case 'f':
-        AdjustMessage();
-        TurnLeftMessage();
-        SetSpeedValuesDurationAndStop(-ADJUST_TURN_SPEED, ADJUST_TURN_SPEED, ADJUST_DURATION);
-        turnSensorReset();
-        Serial1.flush();
-        break;
+    case 'f':
+      AdjustMessage();
+      TurnLeftMessage();
+      SetSpeedValuesDurationAndStop(-ADJUST_TURN_SPEED, ADJUST_TURN_SPEED, ADJUST_DURATION);
+      turnSensorReset();
+      Serial1.flush();
+      break;
 
-      case 'y':
-        AdjustMessage();
-        TurnRightMessage();
-        SetSpeedValuesDurationAndStop(ADJUST_TURN_SPEED, -ADJUST_TURN_SPEED, ADJUST_DURATION);
-        turnSensorReset();
-        Serial1.flush();
-        break;
+    case 'y':
+      AdjustMessage();
+      TurnRightMessage();
+      SetSpeedValuesDurationAndStop(ADJUST_TURN_SPEED, -ADJUST_TURN_SPEED, ADJUST_DURATION);
+      turnSensorReset();
+      Serial1.flush();
+      break;
 
-      case 'g':
-        AdjustMessage();
-        MoveBackwardsMessage();
-        SetSpeedValuesDurationAndStop(-ADJUST_REVERSE_SPEED, -ADJUST_REVERSE_SPEED, ADJUST_DURATION);
-        Serial1.flush();
-        break;
+    case 'g':
+      AdjustMessage();
+      MoveBackwardsMessage();
+      SetSpeedValuesDurationAndStop(-ADJUST_REVERSE_SPEED, -ADJUST_REVERSE_SPEED, ADJUST_DURATION);
+      Serial1.flush();
+      break;
 
     case 'e':
       SpeedStop();
@@ -260,9 +260,9 @@ void loop() {
       ResetEncoderTotalValues();
 
       /*This checks to see if the corridor we are in has a room or doesn't have a room.
-      if it has a room then we need to add the two distances together, if it doesnt have
-      a room then we only want the whole distance !!!This will not work if a corridor has
-      two rooms and we press B, can only work with one room in a corridor!!!*/
+        if it has a room then we need to add the two distances together, if it doesnt have
+        a room then we only want the whole distance !!!This will not work if a corridor has
+        two rooms and we press B, can only work with one room in a corridor!!!*/
       if (movementArray[indexPositionMovement - 1] == 'x' ||
           movementArray[indexPositionMovement - 1] == 'z' ||
           movementArray[indexPositionMovement - 1] == 'n')
@@ -277,18 +277,18 @@ void loop() {
       }
       AddEncoderValuesIntoArray();
       AddMovementValueIntoArray('b');
-      
+
       //Allows us to adjust the zumo when it has done a 180 degree turn. Can only move forward and adjust.
       SwitchCaseForReturningToJunction();
-      
+
       AutomatedMessage();
       ArrivedTJunctionMessage();
-      SpeedStop();
-      
+      //SpeedStop();
+
       /*This checks to see if the room we have searched is valid, if it is a z or x it means a survior was inside
-        and we want to come back to search the room. If it wasn't and it was a n or another value then we want to 
+        and we want to come back to search the room. If it wasn't and it was a n or another value then we want to
         cut out this corridor for when we return home this optimizes the path. !!!This will not work if a corridor has
-      two rooms and there is a surivor at the end, since it only checks the first room.!!!*/
+        two rooms and there is a surivor at the end, since it only checks the first room.!!!*/
       if (!(movementArray[indexPositionMovement - 2] == 'z' || movementArray[indexPositionMovement - 2] == 'x'))
       {
         if (movementArray[indexPositionMovement - 2] == 'n')
@@ -325,16 +325,17 @@ void loop() {
       //Add certain distance to the encoder values so we can bypass the t junction.
       //Been told we can stop at junction so it's not needed.
       //AddEncoderValues(TJUNCTION, TJUNCTION);
-      SpeedStop();
+      Serial1.flush();
+      MovementGoingForward();
       Serial1.flush();
       break;
 
     case 'h':
       /*This is set to true so certain functions such as scan room can peform differently.*/
       ReturnHomeIsTrue = true;
-      
-      /*Remember we increment everytime we add onto the array so we need to decrement 
-       to get the last value added in the array.*/      
+
+      /*Remember we increment everytime we add onto the array so we need to decrement
+        to get the last value added in the array.*/
       indexPositionMovement--;
       indexPositionDistance--;
       TurnLeft(90);
@@ -344,8 +345,8 @@ void loop() {
   }
 }
 
-/*This switch is called only in our moveforward function, when you press e the zumo is stopped 
-  this function is called and this switch allows us either to adjust the position of the zumo, 
+/*This switch is called only in our moveforward function, when you press e the zumo is stopped
+  this function is called and this switch allows us either to adjust the position of the zumo,
   scan a room left or right or carry on moving forward.*/
 void SwitchCaseForSearchingRoomInMovement()
 {
@@ -399,13 +400,13 @@ void SwitchCaseForSearchingRoomInMovement()
         break;
 
       case 'z':
-      /*We want to know the distance of when we pressed Z on the encoders. This allows us to know
-        When we need to scan the room when we return home. So every corridor which has a room or more
-        should have two distances each room. e.g distance, room, distance, room, distance, hit end of corridor*/
+        /*We want to know the distance of when we pressed Z on the encoders. This allows us to know
+          When we need to scan the room when we return home. So every corridor which has a room or more
+          should have two distances each room. e.g distance, room, distance, room, distance, hit end of corridor*/
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
         AddMovementValueIntoArray('x');
-        
+
         AutomatedMessage();
         SearchRoomMessage();
 
@@ -415,15 +416,15 @@ void SwitchCaseForSearchingRoomInMovement()
         break;
 
       case 'x':
-      /*We want to know the distance of when we pressed X on the encoders. This allows us to know
-        When we need to scan the room when we return home. So every corridor which has a room or more
-        should have two distances each room. e.g distance, room, distance, room, distance, hit end of corridor*/
+        /*We want to know the distance of when we pressed X on the encoders. This allows us to know
+          When we need to scan the room when we return home. So every corridor which has a room or more
+          should have two distances each room. e.g distance, room, distance, room, distance, hit end of corridor*/
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
         AddMovementValueIntoArray('z');
-        
+
         AutomatedMessage();
-        SearchRoomMessage();      
+        SearchRoomMessage();
         TurnRightScanRoom();
         turnOffLoop = true;
         Serial1.flush();
@@ -438,9 +439,9 @@ void SwitchCaseForSearchingRoomInMovement()
   } while (turnOffLoop != true);
 }
 
-/*This switch is called only when we press b, the reason for this usually the turning 180 isn't reliable enough and 
-it will be a little off. This allows us to adjust the position of the zumo and then move forward when we are happy 
-with the position. Asked Mark and he said it's fine so noice.*/
+/*This switch is called only when we press b, the reason for this usually the turning 180 isn't reliable enough and
+  it will be a little off. This allows us to adjust the position of the zumo and then move forward when we are happy
+  with the position. Asked Mark and he said it's fine so noice.*/
 void SwitchCaseForReturningToJunction()
 {
   bool turnOffLoop = false;
@@ -491,15 +492,15 @@ void SwitchCaseForReturningToJunction()
 }
 
 /*This is very important this switch is called when we press H and want to return home
-We move forward first using the encoder value we receive from the distance array to start
-us off. It will then enter a while and then check the movement array to see what movement
-needs to be done. Example it's 'a' we rotate left, decrement both index positions for the
-distance and mvoement array and then Moveforward. This cycle will keep happening till we
-return home. 
+  We move forward first using the encoder value we receive from the distance array to start
+  us off. It will then enter a while and then check the movement array to see what movement
+  needs to be done. Example it's 'a' we rotate left, decrement both index positions for the
+  distance and mvoement array and then Moveforward. This cycle will keep happening till we
+  return home.
 
-!!!Warning: If our arrays go forward, rotate and rotate again. this will break the
-returning home. It needs to go distance, movement, distance. Not distance, movement, movement, distance
-otherwise this won't work.*/
+  !!!Warning: If our arrays go forward, rotate and rotate again. this will break the
+  returning home. It needs to go distance, movement, distance. Not distance, movement, movement, distance
+  otherwise this won't work.*/
 void SwitchCaseForAutomaticBaseReturn()
 {
   //Do the first movement, this starts our zumo off with first distance.
@@ -593,7 +594,7 @@ void SwitchCaseForAutomaticBaseReturn()
 }
 
 /*Rotates right using the gyro to detect what angle we are at and the encoders
-to keep the motors speed even (since motors have different power)*/
+  to keep the motors speed even (since motors have different power)*/
 void TurnRight(int degrees)
 {
   turnSensorReset();
@@ -617,7 +618,7 @@ void TurnRight(int degrees)
 }
 
 /*Rotates left using the gyro to detect what angle we are at and the encoders
-to keep the motors speed even (since motors have different power)*/
+  to keep the motors speed even (since motors have different power)*/
 void TurnLeft(int degrees)
 {
   turnSensorReset();
@@ -651,7 +652,7 @@ bool ScanRoomProximityTurnLeftGyro(bool objectseen, int degrees)
   SetEncodersAndSpeed(-AUTO_TURN_SPEED, AUTO_TURN_SPEED);
   int angle = 0;
   do {
-    delay(1);
+    //delay(1);
     countsLeft = -encoders.getCountsLeft();
     countsRight = encoders.getCountsRight();
     error = countsLeft - STRAIGHTFACTOR * countsRight;
@@ -708,19 +709,29 @@ bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
 void TurnLeftScanRoom()
 {
   SpeedStop();
-  delay(100);
+  delay(120);
   TurnLeft(90);
+  delay(120);
+  MovementForwardSettingDistanceAndSpeed(100,100, 400);
   ScanRoom();
+  delay(120);
+  MovementReverseSettingDistanceAndSpeed(-100,-100,-400);
   delay(400);
   TurnRight(90);
+  
   //MovementGoingForward();
 }
 void TurnRightScanRoom()
 {
   SpeedStop();
-  delay(100);
+  delay(120);
   TurnRight(90);
+  delay(120);
+  MovementForwardSettingDistanceAndSpeed(100,100,400);
+  delay(120);
   ScanRoom();
+  delay(120);
+  MovementReverseSettingDistanceAndSpeed(-100,-100,-401);
   delay(400);
   TurnLeft(90);
   // MovementGoingForward();
@@ -758,14 +769,14 @@ void SearchRoomMessagesBeforeReturningHome(bool objectseen)
     //Change it to n which stands for nothing, means we can skip searching a room when we return home
     //-1 since when it was added position would have been incremented.
     movementArray[indexPositionMovement - 1] = 'n';
-    AmountOfRooms++;
     RoomEmptyMessage(AmountOfRooms);
+    AmountOfRooms++;
   }
 }
 
 /*Checks to see if a survior is still in the room, if it is it will play a buzzer and flash LED lights
-the lights will stay on and are turned off when we return home. It also lets us know if a survivor has
-left the room*/
+  the lights will stay on and are turned off when we return home. It also lets us know if a survivor has
+  left the room*/
 void SearchRoomMeessagesReturningHome(bool objectseen)
 {
   if (objectseen) {
@@ -777,7 +788,7 @@ void SearchRoomMeessagesReturningHome(bool objectseen)
   }
 }
 
-void AddEncodersToTempLeftAndTempRight(int tleft, int tright){
+void AddEncodersToTempLeftAndTempRight(int tleft, int tright) {
   tempLeft = tleft;
   tempRight = tright;
 }
@@ -824,11 +835,11 @@ void InitArrays()
 }
 
 /*This allows us to move forward using the encoders to keep us in a straight line and the linesensors
-to detect if we have hit a wall. If our left or right sensor has hit a wall then we delay for 60 ms and
-read the values again to see if the middle sensor is over the line. If it is then we chuck the distance
-value into the array. If it hasn't it means we've hit a wall at a angle. We then reverse and then turn for 
-a certain amount of item which usually corrects the position of the zumo. We also can Press 'e' to stop this
-takes us to a swtich that allows us to adjust the postition, scan a room or move forward again.*/
+  to detect if we have hit a wall. If our left or right sensor has hit a wall then we delay for 60 ms and
+  read the values again to see if the middle sensor is over the line. If it is then we chuck the distance
+  value into the array. If it hasn't it means we've hit a wall at a angle. We then reverse and then turn for
+  a certain amount of item which usually corrects the position of the zumo. We also can Press 'e' to stop this
+  takes us to a swtich that allows us to adjust the postition, scan a room or move forward again.*/
 void MovementGoingForward()
 {
   turnSensorReset();
@@ -844,14 +855,13 @@ void MovementGoingForward()
       SwitchCaseForSearchingRoomInMovement();
       break;
     }
-    delay(2);
     countsLeft = encoders.getCountsLeft();
     countsRight = encoders.getCountsRight();
     error = countsLeft - STRAIGHTFACTOR * countsRight;
     correction = Kp * error;
     currentSpeedRight = AUTO_FORWARD_SPEED + correction;
     SetSpeedValues(currentSpeedLeft, currentSpeedRight);
-    
+
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
@@ -864,14 +874,14 @@ void MovementGoingForward()
               && lineSensorValues[1] > QTR_THRESHOLD))
       {
         //Maye need to change the duration to 200.
-        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION_WALL);
         AddEncoderValues(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         AddEncoderValuesIntoArray();
         break;
       }
       else
       {
-       SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
         if (lineSensorValues[2] > QTR_THRESHOLD)
         {
           SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
@@ -890,9 +900,9 @@ void MovementGoingForward()
 }
 
 /*This forward movement function is slightly different to the other one this is for when we have pressed 'b'
-since we are not allowed to do anything else till we have either past the room. This will break out of the while
-loop when it has arrived at the T junction. It has line sensors to check if it's hit a wall at a angle and will
-recorrect itself.*/
+  since we are not allowed to do anything else till we have either past the room. This will break out of the while
+  loop when it has arrived at the T junction. It has line sensors to check if it's hit a wall at a angle and will
+  recorrect itself.*/
 void MovementForwardUsingDistance()
 {
   turnSensorReset();
@@ -900,7 +910,7 @@ void MovementForwardUsingDistance()
 
   while (countsLeft + tempLeft < totalDistanceValueLeftEncoder + TJUNCTION && countsRight + tempRight < totalDistanceValueRightEncoder + TJUNCTION)
   {
-    delay(2);
+   // delay(2);
     countsLeft = encoders.getCountsLeft();
     countsRight = encoders.getCountsRight();
     error = countsLeft - STRAIGHTFACTOR * countsRight;
@@ -929,11 +939,38 @@ void MovementForwardUsingDistance()
   }
 }
 
+/*Used for using the encoders to see how much to move into the room by
+and then we use the same value to reverse out.*/ 
+void MovementForwardSettingDistanceAndSpeed(int leftspeed, int rightspeed, int distance)
+{
+  turnSensorReset();
+  SetEncodersAndSpeed(leftspeed, rightspeed);
+
+  while (countsLeft < distance && countsRight < distance)
+  {
+    countsLeft = encoders.getCountsLeft();
+    countsRight = encoders.getCountsRight();
+  }
+  SpeedStop(); 
+}
+
+void MovementReverseSettingDistanceAndSpeed(int leftspeed, int rightspeed, int distance)
+{
+  turnSensorReset();
+  SetEncodersAndSpeed(leftspeed, rightspeed);
+
+  while (countsLeft > distance && countsRight > distance)
+  {
+    countsLeft = encoders.getCountsLeft();
+    countsRight = encoders.getCountsRight();
+  }
+  SpeedStop();
+}
 
 /*Same again very similiar to the other distance mvoements however this is called when we return home
-it uses the distances in the distance array to break out of the while loop. It uses sensors to check if 
-it has hit a wall, if it has then if it's hit the wall with the middle sensor it will stop and break the while,
-if it hasn't then its hit a wall at a angle and will correct it's position.*/
+  it uses the distances in the distance array to break out of the while loop. It uses sensors to check if
+  it has hit a wall, if it has then if it's hit the wall with the middle sensor it will stop and break the while,
+  if it hasn't then its hit a wall at a angle and will correct it's position.*/
 void MovementForwardUsingDistanceAutomated()
 {
   turnSensorReset();
@@ -941,26 +978,25 @@ void MovementForwardUsingDistanceAutomated()
 
   while (countsLeft + tempLeft < leftDistanceEncoderArray[indexPositionDistance] && countsRight + tempRight < rightDistanceEncoderArray[indexPositionDistance])
   {
-    delay(2);
     countsLeft = encoders.getCountsLeft();
     countsRight = encoders.getCountsRight();
     error = countsLeft - STRAIGHTFACTOR * countsRight;
     correction = Kp * error;
     currentSpeedRight = AUTO_FORWARD_SPEED + correction;
     SetSpeedValues(currentSpeedLeft, currentSpeedRight);
-    
+
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
       delay(50);
       lineSensors.read(lineSensorValues);
-      
+
       if ((lineSensorValues[0] > QTR_THRESHOLD
            && lineSensorValues[1] > QTR_THRESHOLD)
           || (lineSensorValues[2] > QTR_THRESHOLD
               && lineSensorValues[1] > QTR_THRESHOLD))
       {
-        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION);
+        SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, -AUTO_REVERSE_SPEED, REVERSE_DURATION_WALL);
         break;
       }
       else
@@ -970,7 +1006,7 @@ void MovementForwardUsingDistanceAutomated()
         if (lineSensorValues[2] > QTR_THRESHOLD)
         {
           SetSpeedValuesDurationAndStop(-AUTO_REVERSE_SPEED, AUTO_REVERSE_SPEED, TURN_DURATION);
-          AddEncodersToTempLeftAndTempRight(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight()); 
+          AddEncodersToTempLeftAndTempRight(encoders.getCountsAndResetLeft(), encoders.getCountsAndResetRight());
         }
         else
         {
@@ -981,7 +1017,7 @@ void MovementForwardUsingDistanceAutomated()
         countsRight = encoders.getCountsRight();
       }
     }
-   SpeedStop();
+    SpeedStop();
   }
 }
 
@@ -1014,7 +1050,7 @@ static void lineSensorCalibrateSetup()
     lineSensors.calibrate();
     turnSensorUpdate();
   }
-  
+
   turnSensorReset();
 
   while ((int32_t)turnAngle < turnAngle45 * 2)
@@ -1022,7 +1058,7 @@ static void lineSensorCalibrateSetup()
     lineSensors.calibrate();
     turnSensorUpdate();
   }
-  
+
   turnSensorReset();
 
   while ((int32_t)turnAngle < turnAngle45 * 2)
@@ -1030,7 +1066,7 @@ static void lineSensorCalibrateSetup()
     lineSensors.calibrate();
     turnSensorUpdate();
   }
-  
+
   turnSensorReset();
   SpeedStop();
 }
