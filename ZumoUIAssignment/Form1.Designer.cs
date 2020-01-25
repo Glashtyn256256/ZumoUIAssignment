@@ -139,10 +139,10 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(17, 77);
+            this.button6.Location = new System.Drawing.Point(6, 77);
             this.button6.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(92, 52);
+            this.button6.Size = new System.Drawing.Size(103, 55);
             this.button6.TabIndex = 9;
             this.button6.Text = "Search Room Left";
             this.button6.UseVisualStyleBackColor = true;
@@ -153,7 +153,7 @@
             this.button7.Location = new System.Drawing.Point(304, 77);
             this.button7.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(92, 52);
+            this.button7.Size = new System.Drawing.Size(104, 55);
             this.button7.TabIndex = 10;
             this.button7.Text = "Search Room Right";
             this.button7.UseVisualStyleBackColor = true;
@@ -219,7 +219,7 @@
             this.button13.Location = new System.Drawing.Point(303, 21);
             this.button13.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button13.Name = "button13";
-            this.button13.Size = new System.Drawing.Size(92, 52);
+            this.button13.Size = new System.Drawing.Size(105, 52);
             this.button13.TabIndex = 16;
             this.button13.Text = "Right 90 Auto";
             this.button13.UseVisualStyleBackColor = true;
@@ -227,12 +227,12 @@
             // 
             // button14
             // 
-            this.button14.Location = new System.Drawing.Point(18, 21);
+            this.button14.Location = new System.Drawing.Point(6, 21);
             this.button14.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button14.Name = "button14";
-            this.button14.Size = new System.Drawing.Size(92, 52);
+            this.button14.Size = new System.Drawing.Size(104, 52);
             this.button14.TabIndex = 17;
-            this.button14.Text = "Right 90 Auto";
+            this.button14.Text = "Left 90 Auto";
             this.button14.UseVisualStyleBackColor = true;
             this.button14.Click += new System.EventHandler(this.AutomatedRotateRight);
             // 
@@ -252,7 +252,7 @@
             this.button16.Location = new System.Drawing.Point(115, 77);
             this.button16.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button16.Name = "button16";
-            this.button16.Size = new System.Drawing.Size(183, 52);
+            this.button16.Size = new System.Drawing.Size(183, 55);
             this.button16.TabIndex = 20;
             this.button16.Text = "Stop";
             this.button16.UseVisualStyleBackColor = true;
