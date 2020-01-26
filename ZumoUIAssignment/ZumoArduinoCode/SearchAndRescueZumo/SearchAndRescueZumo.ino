@@ -593,6 +593,7 @@ void SwitchCaseForAutomaticBaseReturn()
   }
 }
 
+
 /*Rotates right using the gyro to detect what angle we are at and the encoders
   to keep the motors speed even (since motors have different power)*/
 void TurnRight(int degrees)
@@ -604,13 +605,19 @@ void TurnRight(int degrees)
     delay(1);
     countsLeft = encoders.getCountsLeft();
     countsRight = -encoders.getCountsRight();
-    error = countsRight - STRAIGHTFACTOR * countsLeft;
+    error = countsRight - countsLeft;
     correction = Kp * error;
     currentSpeedLeft = AUTO_TURN_SPEED + correction;
     SetSpeedValues(currentSpeedLeft, currentSpeedRight);
     angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
     turnSensorUpdate();
-  } while (angle > -degrees);
+
+    /*Even when correcting the motors speed for some reason it still cant turn correctly
+    when turning right. Even when I hard coded the speed, I decided to add extra degrees on and 
+    it seems to perform a full right turn or 45* turn. Hence any value passed through will have negative 3
+    onto it.
+    */
+  } while (angle > -degrees - 2);
   encoders.getCountsAndResetLeft();
   encoders.getCountsAndResetRight();
   SpeedStop();
@@ -628,13 +635,16 @@ void TurnLeft(int degrees)
     delay(1);
     countsLeft = -encoders.getCountsLeft();
     countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
+    error = countsRight - countsLeft;
     correction = Kp * error;
-    currentSpeedRight = AUTO_TURN_SPEED + correction;
-    SetSpeedValues(currentSpeedLeft, currentSpeedRight);
+    currentSpeedLeft = AUTO_TURN_SPEED + correction;
+    SetSpeedValues(-currentSpeedLeft, currentSpeedRight);
     angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
     turnSensorUpdate();
-  } while (angle < degrees);
+
+    /*TurnLeft seems to work most the time I've added 1 more degree on just in-case
+    since I would rather overcompensate than undercompensate*/
+  } while (angle < degrees + 2);
   encoders.getCountsAndResetLeft();
   encoders.getCountsAndResetRight();
   SpeedStop();
@@ -655,10 +665,10 @@ bool ScanRoomProximityTurnLeftGyro(bool objectseen, int degrees)
     //delay(1);
     countsLeft = -encoders.getCountsLeft();
     countsRight = encoders.getCountsRight();
-    error = countsLeft - STRAIGHTFACTOR * countsRight;
+    error = countsRight - countsLeft;
     correction = Kp * error;
-    currentSpeedRight = AUTO_TURN_SPEED + correction;
-    SetSpeedValues(currentSpeedLeft, currentSpeedRight);
+    currentSpeedLeft = AUTO_TURN_SPEED + correction;
+    SetSpeedValues(-currentSpeedLeft, currentSpeedRight);
     angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
     if (objectseen == false)
     {
@@ -668,7 +678,7 @@ bool ScanRoomProximityTurnLeftGyro(bool objectseen, int degrees)
       objectseen = leftValue >= sensorProximityThreshold || rightValue >= sensorProximityThreshold;
     }
     turnSensorUpdate();
-  } while (angle < degrees);
+  } while (angle < degrees );
   SpeedStop();
   turnSensorReset();
   return objectseen;
@@ -687,7 +697,7 @@ bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
     delay(1);
     countsLeft = encoders.getCountsLeft();
     countsRight = -encoders.getCountsRight();
-    error = countsRight - STRAIGHTFACTOR * countsLeft;
+    error = countsRight - countsLeft;
     correction = Kp * error;
     currentSpeedLeft = AUTO_TURN_SPEED + correction;
     SetSpeedValues(currentSpeedLeft, currentSpeedRight);
@@ -700,7 +710,7 @@ bool ScanRoomProximityTurnRightGyro(bool objectseen, int degrees)
       objectseen = leftValue >= sensorProximityThreshold || rightValue >= sensorProximityThreshold;
     }
     turnSensorUpdate();
-  } while (angle > -degrees);
+  } while (angle > -degrees - 2);
   SpeedStop();
   turnSensorReset();
   return objectseen;
