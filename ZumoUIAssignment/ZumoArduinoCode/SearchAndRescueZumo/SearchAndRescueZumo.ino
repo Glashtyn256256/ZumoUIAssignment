@@ -21,6 +21,7 @@ L3G gyro;
 #define NUM_SENSORS 3
 uint16_t lineSensorValues[NUM_SENSORS];
 #define QTR_THRESHOLD     500  // microseconds
+#define LINE_SENSOR_DELAY 50
 
 //Used for the proximity sensors to scan the room.
 const uint16_t sensorProximityThreshold = 5;
@@ -875,7 +876,7 @@ void MovementGoingForward()
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
-      delay(50);
+      delay(LINE_SENSOR_DELAY);
       lineSensors.read(lineSensorValues);
 
       if ((lineSensorValues[0] > QTR_THRESHOLD
@@ -998,7 +999,7 @@ void MovementForwardUsingDistanceAutomated()
     lineSensors.read(lineSensorValues);
     if (lineSensorValues[2] > QTR_THRESHOLD || lineSensorValues[0] > QTR_THRESHOLD)
     {
-      delay(50);
+      delay(LINE_SENSOR_DELAY);
       lineSensors.read(lineSensorValues);
 
       if ((lineSensorValues[0] > QTR_THRESHOLD
