@@ -23,6 +23,12 @@
 //}
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/*Instead of using the Gyro to turn 90 we used the wheel encoders, the issue with this was
+even with speed correction it wouldn't always work, sometimes it would be way off and sometimes
+it would be spot on. Another issue is that I couldnt pass in degrees since if we did 45
+then it would have to have a different ENCODER_TURN_LIMIT, I could have solved this issue
+but the Gyro proved to be more useful in the turning so I stuck with it*/
+
 //void TurnLeftUsingEncoders()
 //{
 //  MotorSpeedTurnLeft();
@@ -182,6 +188,9 @@
 //}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*Instead of using the Gyro to Scan the room we used the wheel encoders, this has the same
+issue when turning it woulnd't always be correct and eventually when it came back to the corridor
+it would be out of position in a bad angle. So again I decided not to use it in the end*/
 
 //bool ScanRoomProximityTurnRightEncoder(bool objectseen)
 //{
