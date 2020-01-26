@@ -723,10 +723,10 @@ void TurnLeftScanRoom()
   delay(120);
   TurnLeft(90);
   delay(120);
-  MovementForwardSettingDistanceAndSpeed(100,100, 400);
+  MovementForwardSettingDistanceAndSpeed(100,100, 250);
   ScanRoom();
   delay(120);
-  MovementReverseSettingDistanceAndSpeed(-100,-100,-400);
+  MovementReverseSettingDistanceAndSpeed(-100,-100,-250);
   delay(400);
   TurnRight(90);
   
@@ -738,11 +738,11 @@ void TurnRightScanRoom()
   delay(120);
   TurnRight(90);
   delay(120);
-  MovementForwardSettingDistanceAndSpeed(100,100,400);
+  MovementForwardSettingDistanceAndSpeed(100,100,250);
   delay(120);
   ScanRoom();
   delay(120);
-  MovementReverseSettingDistanceAndSpeed(-100,-100,-401);
+  MovementReverseSettingDistanceAndSpeed(-100,-100,-250);
   delay(400);
   TurnLeft(90);
   // MovementGoingForward();
